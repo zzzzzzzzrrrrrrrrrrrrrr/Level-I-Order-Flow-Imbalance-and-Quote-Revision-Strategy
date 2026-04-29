@@ -1,0 +1,52 @@
+# Local agent and editor state
+AGENTS.md
+.agents/
+.idea/
+
+# Python cache and build artifacts
+__pycache__/
+*.py[cod]
+.pytest_cache/
+build/
+dist/
+*.egg-info/
+
+# Secrets and local overrides
+.env
+.env.*
+*.local
+secrets/
+
+# OS noise
+Thumbs.db
+
+# Notebook artifacts
+notebooks/**/*.ipynb
+notebooks/**/.ipynb_checkpoints/
+
+# Data directories: keep scaffold only
+data/raw/*
+!data/raw/.gitkeep
+data/interim/*
+!data/interim/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+data/cache/*
+!data/cache/.gitkeep
+
+# Outputs: keep scaffold only
+outputs/experiments/*
+!outputs/experiments/.gitkeep
+outputs/backtests/*
+!outputs/backtests/.gitkeep
+outputs/figures/*
+!outputs/figures/.gitkeep
+outputs/tables/*
+!outputs/tables/.gitkeep
+outputs/logs/*
+!outputs/logs/.gitkeep
+
+# Logs and temporary files
+*.log
+*.tmp
+*.bak
