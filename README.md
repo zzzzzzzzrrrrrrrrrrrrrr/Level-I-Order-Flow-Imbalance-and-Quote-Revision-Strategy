@@ -21,7 +21,7 @@ Execution-aware research scaffold for studying whether Level-I quote and trade i
 - Data, outputs, local agent state, and notebook files are ignored by default in `.gitignore`.
 - Stage 1 schema, WRDS normalization, cleaning primitives, and raw WRDS extraction scaffolding are implemented with unit tests.
 - The current AAPL WRDS slice uses `taqmsec.nbbom_YYYYMMDD` as the main quote source, so normalized quotes represent national BBO state: `bid_exchange`, `ask_exchange`, `bid`, `ask`, `bid_size`, and `ask_size`. Trades use `taqmsec.ctm_YYYYMMDD`.
-- Cleaning v2, quote-trade alignment v1, quote feature v1, trade signing v1, signed-flow feature v1, and labeling v1 are implemented as separate auditable steps. Condition-code eligibility, signal rules, walk-forward evaluation, and backtests are still separate unfinished stages.
+- Cleaning v2, quote-trade alignment v1, quote feature v1, trade signing v1, signed-flow feature v1, labeling v1, and signals v1 are implemented as separate auditable steps. Condition-code eligibility, walk-forward evaluation, and backtests are still separate unfinished stages.
 
 ## WRDS extraction
 
@@ -139,3 +139,13 @@ D:\python_library_envs\VHFT_lab\python.exe scripts\build_labels.py configs\data\
 ```
 
 Labeling v1 creates future midquote return and direction targets from quote feature data. Labels are computed strictly after `decision_time` and must not be used as features. This step does not create trading signals, run walk-forward evaluation, or run backtests.
+
+## Signals
+
+Build sequential-gate signal v1 rows:
+
+```powershell
+D:\python_library_envs\VHFT_lab\python.exe scripts\build_signals.py configs\data\aapl_wrds_20260408_20260410.yaml
+```
+
+Signals v1 builds an interpretable sequential gate from current quote imbalance, signed-flow imbalance, and quote revision. Default thresholds are diagnostic sign-agreement defaults, not optimized trading thresholds. Labels may be retained in the output for later evaluation, but labels are not used to compute signals. This step does not run walk-forward evaluation or backtests.
