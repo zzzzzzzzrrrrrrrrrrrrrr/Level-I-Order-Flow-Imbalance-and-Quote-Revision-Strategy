@@ -14,8 +14,8 @@ quote source = WRDS TAQ NBBOM
 trade source = WRDS TAQ CTM
 ```
 
-This report records the local pipeline run through backtest v1. It is not a
-research-grade backtest report.
+This report records the local pipeline run through model training v1 and the
+model-based AAPL prototype backtest. It is not a research-grade backtest report.
 
 ## Pipeline Status
 
@@ -36,6 +36,7 @@ Implemented stages:
 - parameter sensitivity v1
 - train-validation-test parameter selection v1
 - backtest v1
+- model training v1
 
 Not implemented:
 
@@ -378,6 +379,88 @@ accounting diagnostics.
 This is a held-out accounting result under the current midquote-plus-cost
 execution proxy. It is not a research-grade profitability claim.
 
+## Model Training v1
+
+Policy:
+
+```text
+model_training_policy = train_linear_feature_score_on_train_dates
+model_selection_policy = select_feature_set_and_threshold_on_validation
+test_policy = evaluate_selected_model_once_on_test
+objective = maximize_validation_final_equity
+test_used_for_selection = false
+```
+
+Current AAPL prototype split:
+
+```text
+train      = 2026-04-08
+validation = 2026-04-09
+test       = 2026-04-10
+```
+
+Candidate grid:
+
+```text
+feature_sets = qi_qr_flow_500ms, qi_qr_flow_multiwindow
+score_threshold_grid = 0.0, 0.10, 0.25, 0.50, 0.75, 1.0, 1.25, 1.50, 2.0
+min_validation_orders = 1000
+label_horizon = 500ms
+```
+
+Validation candidate results:
+
+| candidate | feature set | threshold | eligible | validation final equity | validation orders |
+| --- | --- | ---: | --- | ---: | ---: |
+| `candidate_0001` | `qi_qr_flow_500ms` | `0.00` | yes | `-969.130` | `45,596` |
+| `candidate_0002` | `qi_qr_flow_500ms` | `0.10` | yes | `-964.030` | `64,839` |
+| `candidate_0003` | `qi_qr_flow_500ms` | `0.25` | yes | `-918.940` | `75,413` |
+| `candidate_0004` | `qi_qr_flow_500ms` | `0.50` | yes | `-782.870` | `71,988` |
+| `candidate_0005` | `qi_qr_flow_500ms` | `0.75` | yes | `-565.540` | `54,218` |
+| `candidate_0006` | `qi_qr_flow_500ms` | `1.00` | yes | `-326.860` | `32,467` |
+| `candidate_0007` | `qi_qr_flow_500ms` | `1.25` | yes | `-138.880` | `14,485` |
+| `candidate_0008` | `qi_qr_flow_500ms` | `1.50` | yes | `-34.860` | `3,876` |
+| `candidate_0009` | `qi_qr_flow_500ms` | `2.00` | no | `-0.110` | `20` |
+| `candidate_0010` | `qi_qr_flow_multiwindow` | `0.00` | yes | `-1045.370` | `47,556` |
+| `candidate_0011` | `qi_qr_flow_multiwindow` | `0.10` | yes | `-1042.930` | `69,430` |
+| `candidate_0012` | `qi_qr_flow_multiwindow` | `0.25` | yes | `-1015.230` | `81,642` |
+| `candidate_0013` | `qi_qr_flow_multiwindow` | `0.50` | yes | `-895.150` | `79,128` |
+| `candidate_0014` | `qi_qr_flow_multiwindow` | `0.75` | yes | `-666.170` | `61,835` |
+| `candidate_0015` | `qi_qr_flow_multiwindow` | `1.00` | yes | `-360.660` | `34,994` |
+| `candidate_0016` | `qi_qr_flow_multiwindow` | `1.25` | yes | `-102.070` | `10,746` |
+| `candidate_0017` | `qi_qr_flow_multiwindow` | `1.50` | no | `-6.970` | `862` |
+| `candidate_0018` | `qi_qr_flow_multiwindow` | `2.00` | no | `0.000` | `0` |
+
+Selected validation candidate:
+
+```text
+candidate = candidate_0008
+feature_set = qi_qr_flow_500ms
+score_threshold = 1.50
+validation_final_equity = -34.860
+validation_orders = 3,876
+```
+
+Model-based test backtest:
+
+| fold | selected candidate | feature set | threshold | test date | orders | total cost | final equity |
+| --- | --- | --- | ---: | --- | ---: | ---: | ---: |
+| `fold_001` | `candidate_0008` | `qi_qr_flow_500ms` | `1.50` | `2026-04-10` | `5,682` | `49.710` | `-37.820` |
+
+Result artifacts:
+
+```text
+data/processed/aapl_wrds_20260408_20260410/aapl_wrds_20260408_20260410_model_backtest_v1_summary.csv
+data/processed/aapl_wrds_20260408_20260410/aapl_wrds_20260408_20260410_model_backtest_v1_orders.csv
+data/processed/aapl_wrds_20260408_20260410/aapl_wrds_20260408_20260410_model_backtest_v1_ledger.csv
+data/processed/aapl_wrds_20260408_20260410/aapl_wrds_20260408_20260410_model_training_v1_manifest.json
+```
+
+Interpretation: the model loop reduces trading intensity and loss magnitude
+relative to the untrained rule-based target-position test result, but the
+selected AAPL prototype model remains negative after spread costs. This is a
+successful engineering loop, not a profitable strategy claim.
+
 ## Known Limitations
 
 - NBBO quote-condition eligibility remains diagnostic-only.
@@ -399,3 +482,6 @@ execution proxy. It is not a research-grade profitability claim.
 - Backtest v1 consumes the TVT-selected candidate but does not model latency,
   passive fills, queue priority, official fees, or broader out-of-sample
   robustness.
+- Model training v1 is an AAPL single-slice prototype. The `2026-04-10` test
+  date has already been inspected during prototype work, so results are not an
+  untouched final test claim.

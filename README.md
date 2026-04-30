@@ -22,7 +22,7 @@ Execution-aware research scaffold for studying whether Level-I quote and trade i
 - Data, outputs, local agent state, and notebook files are ignored by default in `.gitignore`.
 - Stage 1 schema, WRDS normalization, cleaning primitives, and raw WRDS extraction scaffolding are implemented with unit tests.
 - The current AAPL WRDS slice uses `taqmsec.nbbom_YYYYMMDD` as the main quote source, so normalized quotes represent national BBO state: `bid_exchange`, `ask_exchange`, `bid`, `ask`, `bid_size`, and `ask_size`. Trades use `taqmsec.ctm_YYYYMMDD`.
-- Cleaning v2, quote-trade alignment v1, quote feature v1, trade signing v1, signed-flow feature v1, labeling v1, signals v1, walk-forward evaluation v1, threshold selection v1, cost model v1, target-position accounting v1, TVT parameter selection v1, backtest v1, and the assumption registry are implemented as separate auditable artifacts. Condition-code eligibility, official fee modeling, and research-grade backtesting remain unfinished stages.
+- Cleaning v2, quote-trade alignment v1, quote feature v1, trade signing v1, signed-flow feature v1, labeling v1, signals v1, walk-forward evaluation v1, threshold selection v1, cost model v1, target-position accounting v1, TVT parameter selection v1, backtest v1, model training v1, and the assumption registry are implemented as separate auditable artifacts. Condition-code eligibility, official fee modeling, and research-grade backtesting remain unfinished stages.
 
 ## WRDS extraction
 
@@ -238,6 +238,21 @@ TVT parameter selection v1 uses expanding train dates, selects parameters on the
 next validation date, and evaluates the frozen selected candidate on the next
 test date. In the current version, no predictive model is trained and no final
 hyperparameter claim is made.
+
+## Model Training
+
+Run the AAPL prototype model training and model-based held-out backtest:
+
+```powershell
+D:\python_library_envs\VHFT_lab\python.exe scripts\run_model_training.py configs\data\aapl_wrds_20260408_20260410.yaml
+```
+
+Model training v1 learns a standardized linear directional score on the train
+date, selects feature-set and score-threshold candidates on the validation date,
+and runs target-position accounting on the held-out test date. It writes
+`*_model_training_v1_candidates.csv`, `*_model_training_v1_predictions.csv`,
+`*_model_backtest_v1_summary.csv`, and related order / ledger / manifest files.
+This is an AAPL prototype loop, not a generalized research-grade model claim.
 
 ## Backtest
 

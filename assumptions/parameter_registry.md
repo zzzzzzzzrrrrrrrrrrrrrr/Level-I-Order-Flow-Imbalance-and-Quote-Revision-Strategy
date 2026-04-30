@@ -226,6 +226,24 @@ and evaluates frozen choices on test dates.
 | model training | not implemented | research_design | v1 selects accounting parameters only | required | unresolved |
 | final hyperparameter claim | false | research_design | AAPL three-day slice is not final evidence | not_applicable | implemented |
 
+## Model Training Assumptions
+
+Model training v1 is scoped to the current AAPL prototype. It is not a
+generalized multi-symbol model claim.
+
+| Parameter | Current value | Type | Source / rationale | Sensitivity required | Status |
+| --- | --- | --- | --- | --- | --- |
+| model form | standardized linear feature score | research_design | no extra ML dependency; auditable baseline | required | implemented |
+| train date | `2026-04-08` | research_design | first date in current AAPL slice | required | prototype |
+| validation date | `2026-04-09` | research_design | model / threshold candidate selection date | required | prototype |
+| test date | `2026-04-10` | research_design | held-out accounting evaluation date, already inspected in prototype work | required | prototype_seen |
+| label horizon | `500ms` | research_design | first model prototype target | required | implemented |
+| feature-set candidates | `qi_qr_flow_500ms`, `qi_qr_flow_multiwindow` | research_design | QI / QR / signed-flow baseline feature families | required | implemented |
+| score threshold grid | `0`, `0.10`, `0.25`, `0.50`, `0.75`, `1.0`, `1.25`, `1.50`, `2.0` | research_design | validation-selected model signal threshold | required | implemented |
+| minimum validation orders | `1000` | research_design | prevents no-trade candidates from winning by avoiding losses | required | implemented |
+| accounting engine | target-position accounting v1 | research_design | bounded test-date account state | required | implemented |
+| final model claim | false | research_design | AAPL three-day prototype only | not_applicable | implemented |
+
 ## Backtest Assumptions
 
 Backtest v1 evaluates frozen TVT-selected target-position accounting candidates
