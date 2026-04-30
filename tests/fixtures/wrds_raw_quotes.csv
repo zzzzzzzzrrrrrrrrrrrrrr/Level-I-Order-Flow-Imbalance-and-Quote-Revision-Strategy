@@ -1,3 +1,3 @@
-date,time_m,sym_root,sym_suffix,ex,bid,ask,bidsiz,asksiz,bidex,askex,qu_cond,qu_seqnum,natbbo_ind
-2026-04-24,09:31:00.000000,AAPL,,Q,190.00,190.02,500,600,Q,Q,I,101,1
-2026-04-24,09:31:01.500000,AAPL,,Q,190.01,190.03,450,550,Q,N,,102,4
+date,time_m,sym_root,sym_suffix,best_bidex,best_askex,nbbo_qu_cond,best_bid,best_ask,best_bidsiz,best_asksiz
+2026-04-10,09:31:00.000000,AAPL,,Q,Q,R,190.00,190.02,500,600
+2026-04-10,09:31:01.500000,AAPL,,Q,B,R,190.01,190.03,450,550

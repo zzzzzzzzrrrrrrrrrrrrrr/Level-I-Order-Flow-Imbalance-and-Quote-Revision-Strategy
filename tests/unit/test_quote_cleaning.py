@@ -5,6 +5,7 @@ from pathlib import Path
 import pandas as pd
 
 from level1_ofi_qr.cleaning import (
+    clean_quotes_v2,
     filter_quote_hard_constraints,
     summarize_quote_quality_warnings,
 )
@@ -29,6 +30,24 @@ def test_filter_quote_hard_constraints_removes_invalid_rows() -> None:
     assert diagnostics.removed_negative_ask_size_rows == 0
     assert diagnostics.removed_crossed_quote_rows == 1
     assert diagnostics.output_rows == 2
+
+
+def test_clean_quotes_v2_records_rule_diagnostics_and_rejected_rows() -> None:
+    quotes = load_fixture_frame()
+
+    result = clean_quotes_v2(quotes)
+
+    assert len(result.cleaned) == 2
+    assert len(result.rejected) == 3
+    assert [item.rule_id for item in result.diagnostics] == [
+        "Q001_non_positive_prices",
+        "Q002_negative_depth",
+        "Q003_crossed_market",
+    ]
+    assert set(result.rejected["rule_id"]) == {
+        "Q001_non_positive_prices",
+        "Q003_crossed_market",
+    }
 
 
 def test_summarize_quote_quality_warnings_flags_soft_issues() -> None:

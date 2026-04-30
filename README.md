@@ -19,3 +19,92 @@ Execution-aware research scaffold for studying whether Level-I quote and trade i
 - `AGENTS.md` remains the source of project rules.
 - The existing notebook lives at `notebooks/00_data_inspection/experiment.ipynb`.
 - Data, outputs, local agent state, and notebook files are ignored by default in `.gitignore`.
+- Stage 1 schema, WRDS normalization, cleaning primitives, and raw WRDS extraction scaffolding are implemented with unit tests.
+- The current AAPL WRDS slice uses `taqmsec.nbbom_YYYYMMDD` as the main quote source, so normalized quotes represent national BBO state: `bid_exchange`, `ask_exchange`, `bid`, `ask`, `bid_size`, and `ask_size`. Trades use `taqmsec.ctm_YYYYMMDD`.
+
+## WRDS extraction
+
+Preview generated SQL without connecting to WRDS:
+
+```powershell
+D:\python_library_envs\VHFT_lab\python.exe scripts\extract_wrds.py configs\data\aapl_wrds_20260408_20260410.yaml --dry-run-sql --limit-per-query 5
+```
+
+Run extraction after WRDS credentials are available through WRDS configuration or `WRDS_USERNAME`:
+
+```powershell
+D:\python_library_envs\VHFT_lab\python.exe scripts\extract_wrds.py configs\data\aapl_wrds_20260408_20260410.yaml
+```
+
+Generated raw data and manifests are written under the configured raw-data directory and are ignored by Git.
+
+For local credentials, either use WRDS' `.pgpass` flow or create a git-ignored `.env` file in the project root:
+
+```text
+WRDS_USERNAME=your_wrds_username
+WRDS_PASSWORD=your_wrds_password
+```
+
+If `.pgpass` already stores the password, `WRDS_USERNAME` alone is usually enough.
+
+Then test the login path without downloading data:
+
+```powershell
+D:\python_library_envs\VHFT_lab\python.exe scripts\extract_wrds.py configs\data\aapl_wrds_20260408_20260410.yaml --connection-test
+```
+
+Check which credentials source the script sees:
+
+```powershell
+D:\python_library_envs\VHFT_lab\python.exe scripts\extract_wrds.py configs\data\aapl_wrds_20260408_20260410.yaml --show-credential-sources --dry-run-sql
+```
+
+List the latest available daily TAQ tables before choosing config dates:
+
+```powershell
+D:\python_library_envs\VHFT_lab\python.exe scripts\extract_wrds.py configs\data\aapl_wrds_20260408_20260410.yaml --list-tables --table-list-limit 10
+```
+
+For the full AAPL slice, omit `--limit-per-query` and write raw outputs to a slice-named folder:
+
+```powershell
+D:\python_library_envs\VHFT_lab\python.exe scripts\extract_wrds.py configs\data\aapl_wrds_20260408_20260410.yaml --output-dir data\raw\aapl_wrds_20260408_20260410
+```
+
+## Dataset build
+
+Build normalized and cleaned datasets from raw WRDS CSV outputs:
+
+```powershell
+D:\python_library_envs\VHFT_lab\python.exe scripts\build_dataset.py configs\data\aapl_wrds_20260408_20260410.yaml
+```
+
+The build writes normalized files under `data/interim/<slice_name>/`; cleaned files, rejected-row audit files, and a diagnostics manifest under `data/processed/<slice_name>/`. If you are building from the small validation extract instead of the full slice, pass `--raw-dir data\raw\validation_structured_contract`.
+
+## Quote-Trade Alignment
+
+Align cleaned trades to the latest cleaned quote strictly before each trade:
+
+```powershell
+D:\python_library_envs\VHFT_lab\python.exe scripts\align_trades.py configs\data\aapl_wrds_20260408_20260410.yaml
+```
+
+The alignment output is written under `data/processed/<slice_name>/` as `*_trades_aligned_quotes.csv` plus `*_alignment_manifest.json`. Matches are constrained to the same `symbol` and `trading_date`.
+
+This alignment version only performs backward quote-trade matching within symbol and trading_date groups. It does not perform trade signing, sale-condition filtering, correction filtering, or final research-sample cleaning.
+
+Run tolerance-sensitivity diagnostics without selecting a final tolerance:
+
+```powershell
+D:\python_library_envs\VHFT_lab\python.exe scripts\align_trades.py configs\data\aapl_wrds_20260408_20260410.yaml --tolerance-sensitivity
+```
+
+## Quote Features
+
+Build quote-only Level-I features from cleaned quotes:
+
+```powershell
+D:\python_library_envs\VHFT_lab\python.exe scripts\build_quote_features.py configs\data\aapl_wrds_20260408_20260410.yaml
+```
+
+Quote feature v1 computes row-preserving, quote-only features from cleaned Level-I quotes. It supports spread, depth, signed top-of-book imbalance, quote revision, and quote event interval diagnostics. It does not compute trade signing, signed order flow imbalance, labels, or backtest signals.

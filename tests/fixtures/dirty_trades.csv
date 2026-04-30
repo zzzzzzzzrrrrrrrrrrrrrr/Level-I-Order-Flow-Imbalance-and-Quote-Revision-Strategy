@@ -1,5 +1,5 @@
-event_time,symbol,source,trade_exchange,sale_condition,trade_correction,trade_id,trade_source,trade_sequence_number,trade_price,trade_size
-2026-04-24T09:31:00-04:00,AAPL,wrds_taq_ctm,Q,,0,9001,C,1001,190.01,100
-2026-04-24T09:31:01-04:00,AAPL,wrds_taq_ctm,Q,@,0,9002,C,1002,190.02,1000000
-2026-04-24T09:31:02-04:00,AAPL,wrds_taq_ctm,Q,,0,9003,C,1003,0.00,100
-2026-04-24T09:31:03-04:00,AAPL,wrds_taq_ctm,Q,,0,9004,C,1004,190.03,-1
+event_time,symbol,source,trade_exchange,sale_condition,trade_correction,trade_sequence_number,trade_price,trade_size
+2026-04-10T09:31:00-04:00,AAPL,wrds_taq_ctm,Q,,0,1001,190.01,100
+2026-04-10T09:31:01-04:00,AAPL,wrds_taq_ctm,Q,@,0,1002,190.02,1000000
+2026-04-10T09:31:02-04:00,AAPL,wrds_taq_ctm,Q,,0,1003,0.00,100
+2026-04-10T09:31:03-04:00,AAPL,wrds_taq_ctm,Q,,0,1004,190.03,-1

@@ -1,11 +1,11 @@
-slice_name: aapl_wrds_latest_3_trading_days
+slice_name: aapl_wrds_20260408_20260410
 purpose: historical_research_baseline
 research_status: primary
 
 source:
   provider: wrds
   dataset_family: taq
-  quote_dataset: cqm
+  quote_dataset: nbbom
   trade_dataset: ctm
   asset_class: us_equities
   venue_scope: consolidated
@@ -16,9 +16,9 @@ universe:
 
 time_range:
   trading_dates:
-    - 2026-04-24
-    - 2026-04-27
-    - 2026-04-28
+    - 2026-04-08
+    - 2026-04-09
+    - 2026-04-10
   session: regular_market_hours
   market_open: "09:30:00"
   market_close: "16:00:00"
@@ -26,6 +26,9 @@ time_range:
 
 data_contract:
   quote_level: level_1
+  quote_scope: national_bbo
+  quote_source: wrds_taq_nbbom
+  trade_source: wrds_taq_ctm
   separate_tables: true
   shared_columns:
     - event_time
@@ -35,12 +38,9 @@ data_contract:
     - event_time
     - symbol
     - source
-    - quote_exchange
     - bid_exchange
     - ask_exchange
-    - quote_condition
-    - quote_sequence_number
-    - natbbo_indicator
+    - nbbo_quote_condition
     - bid
     - ask
     - bid_size
@@ -52,39 +52,50 @@ data_contract:
     - trade_exchange
     - sale_condition
     - trade_correction
-    - trade_id
-    - trade_source
     - trade_sequence_number
     - trade_price
     - trade_size
 
   quote_mapping:
-    event_time: date + time_m
-    symbol: sym_root + sym_suffix
-    quote_exchange: ex
-    bid: bid
-    ask: ask
-    bid_size: bidsiz
-    ask_size: asksiz
-    bid_exchange: bidex
-    ask_exchange: askex
-    quote_condition: qu_cond
-    quote_sequence_number: qu_seqnum
-    natbbo_indicator: natbbo_ind
-    source: wrds_taq_cqm
+    event_time:
+      expr: combine_date_time
+      date_col: date
+      time_col: time_m
+      timezone: America/New_York
+    symbol:
+      expr: concat_symbol
+      root_col: sym_root
+      suffix_col: sym_suffix
+    empty_suffix_policy: omit
+    bid_exchange: best_bidex
+    ask_exchange: best_askex
+    nbbo_quote_condition: nbbo_qu_cond
+    bid: best_bid
+    ask: best_ask
+    bid_size: best_bidsiz
+    ask_size: best_asksiz
+    source:
+      literal: wrds_taq_nbbom
 
   trade_mapping:
-    event_time: date + time_m
-    symbol: sym_root + sym_suffix
+    event_time:
+      expr: combine_date_time
+      date_col: date
+      time_col: time_m
+      timezone: America/New_York
+    symbol:
+      expr: concat_symbol
+      root_col: sym_root
+      suffix_col: sym_suffix
+      empty_suffix_policy: omit
     trade_price: price
     trade_size: size
     trade_exchange: ex
     sale_condition: tr_scond
     trade_correction: tr_corr
-    trade_id: tr_id
-    trade_source: tr_source
     trade_sequence_number: tr_seqnum
-    source: wrds_taq_ctm
+    source:
+      literal: wrds_taq_ctm
 
 storage:
   raw_dir: data/raw

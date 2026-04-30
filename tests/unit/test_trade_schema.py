@@ -9,9 +9,7 @@ from level1_ofi_qr.schema import (
     TRADE_CORRECTION,
     TRADE_COLUMNS,
     TRADE_EXCHANGE,
-    TRADE_ID,
     TRADE_PRICE,
-    TRADE_SOURCE,
     TRADE_SEQUENCE_NUMBER,
     SchemaValidationError,
     validate_trade_frame,
@@ -55,11 +53,9 @@ def test_validate_trade_frame_requires_trade_exchange() -> None:
         validate_trade_frame(trades)
 
 
-def test_validate_trade_frame_requires_audit_fields() -> None:
+def test_validate_trade_frame_requires_correction_and_sequence_number() -> None:
     trades = load_fixture_frame()
     trades.loc[0, TRADE_CORRECTION] = pd.NA
-    trades.loc[0, TRADE_ID] = pd.NA
-    trades.loc[0, TRADE_SOURCE] = pd.NA
     trades.loc[1, TRADE_SEQUENCE_NUMBER] = pd.NA
 
     with pytest.raises(SchemaValidationError, match="Trade rows must populate"):

@@ -12,21 +12,21 @@ def test_filter_frame_to_scope_enforces_symbol_date_and_session() -> None:
         {
             "event_time": pd.to_datetime(
                 [
-                    "2026-04-24T09:31:00-04:00",
-                    "2026-04-24T09:31:30-04:00",
-                    "2026-04-23T09:31:00-04:00",
-                    "2026-04-24T09:29:59-04:00",
+                    "2026-04-10T09:31:00-04:00",
+                    "2026-04-10T09:31:30-04:00",
+                    "2026-04-09T09:31:00-04:00",
+                    "2026-04-10T09:29:59-04:00",
                 ]
             ),
             "symbol": ["AAPL", "MSFT", "AAPL", "AAPL"],
-            "source": ["wrds_taq_cqm"] * 4,
+            "source": ["wrds_taq_nbbom"] * 4,
         }
     )
 
     scoped, diagnostics = filter_frame_to_scope(
         frame,
         symbols=["AAPL"],
-        trading_dates=[date(2026, 4, 24)],
+        trading_dates=[date(2026, 4, 10)],
     )
 
     assert len(scoped) == 1

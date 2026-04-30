@@ -11,8 +11,6 @@ from level1_ofi_qr.schema import (
     SYMBOL,
     TRADE_COLUMNS,
     TRADE_EXCHANGE,
-    TRADE_ID,
-    TRADE_SOURCE,
 )
 from level1_ofi_qr.utils import load_data_slice_config
 
@@ -20,7 +18,7 @@ CONFIG_PATH = (
     Path(__file__).resolve().parents[2]
     / "configs"
     / "data"
-    / "aapl_wrds_20260424_20260428.yaml"
+    / "aapl_wrds_20260408_20260410.yaml"
 )
 FIXTURE_PATH = Path(__file__).resolve().parents[1] / "fixtures" / "wrds_raw_trades.csv"
 
@@ -40,6 +38,4 @@ def test_normalize_wrds_trades_maps_fixture_into_trade_schema() -> None:
     assert normalized.loc[0, SYMBOL] == "AAPL"
     assert normalized.loc[1, TRADE_EXCHANGE] == "Q"
     assert normalized.loc[1, SALE_CONDITION] == "@"
-    assert normalized.loc[0, TRADE_ID] == 9001
-    assert normalized.loc[0, TRADE_SOURCE] == "C"
     assert str(normalized["event_time"].dt.tz) == "America/New_York"

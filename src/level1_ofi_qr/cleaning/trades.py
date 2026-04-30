@@ -6,7 +6,27 @@ from dataclasses import dataclass
 
 import pandas as pd
 
-from ..schema import TRADE_PRICE, TRADE_SIZE, validate_trade_frame
+from ..schema import TRADE_CORRECTION, TRADE_PRICE, TRADE_SIZE, validate_trade_frame
+from .audit import (
+    AuditedCleaningResult,
+    CleaningRule,
+    CleaningRuleDiagnostics,
+    apply_drop_rule,
+    empty_rejected_frame,
+)
+
+TRADE_CLEANING_RULES_V2: tuple[CleaningRule, ...] = (
+    CleaningRule(
+        rule_id="T001_non_positive_price_or_size",
+        description="Remove trades with trade_price <= 0 or trade_size <= 0.",
+        input_columns=(TRADE_PRICE, TRADE_SIZE),
+    ),
+    CleaningRule(
+        rule_id="T002_trade_correction",
+        description="Keep only uncorrected trades where trade_correction is 0/00.",
+        input_columns=(TRADE_CORRECTION,),
+    ),
+)
 
 
 @dataclass(frozen=True)
@@ -34,25 +54,56 @@ def filter_trade_hard_constraints(
 ) -> tuple[pd.DataFrame, TradeHardConstraintDiagnostics]:
     """Filter rows that violate hard trade constraints."""
 
-    validate_trade_frame(trades)
-
-    input_rows = len(trades)
-
-    positive_trade_price = trades.loc[trades[TRADE_PRICE] > 0].reset_index(drop=True)
-    removed_nonpositive_trade_price_rows = input_rows - len(positive_trade_price)
-
-    positive_trade_size = positive_trade_price.loc[
-        positive_trade_price[TRADE_SIZE] > 0
-    ].reset_index(drop=True)
-    removed_nonpositive_trade_size_rows = len(positive_trade_price) - len(positive_trade_size)
+    audited = clean_trades_v2(trades)
+    positive_trade_price = trades.loc[trades[TRADE_PRICE] > 0]
+    positive_trade_size = positive_trade_price.loc[positive_trade_price[TRADE_SIZE] > 0]
 
     diagnostics = TradeHardConstraintDiagnostics(
-        input_rows=input_rows,
-        removed_nonpositive_trade_price_rows=removed_nonpositive_trade_price_rows,
-        removed_nonpositive_trade_size_rows=removed_nonpositive_trade_size_rows,
-        output_rows=len(positive_trade_size),
+        input_rows=len(trades),
+        removed_nonpositive_trade_price_rows=len(trades) - len(positive_trade_price),
+        removed_nonpositive_trade_size_rows=len(positive_trade_price) - len(positive_trade_size),
+        output_rows=len(audited.cleaned),
     )
-    return positive_trade_size, diagnostics
+    return audited.cleaned, diagnostics
+
+
+def clean_trades_v2(trades: pd.DataFrame) -> AuditedCleaningResult:
+    """Apply auditable trade cleaning rules and retain rejected rows."""
+
+    validate_trade_frame(trades)
+
+    current = trades.copy()
+    rejected_frames: list[pd.DataFrame] = []
+    diagnostics: list[CleaningRuleDiagnostics] = []
+
+    for rule in TRADE_CLEANING_RULES_V2:
+        if rule.rule_id == "T001_non_positive_price_or_size":
+            keep_mask = (current[TRADE_PRICE] > 0) & (current[TRADE_SIZE] > 0)
+        elif rule.rule_id == "T002_trade_correction":
+            corrections = current[TRADE_CORRECTION].astype("string").str.strip()
+            keep_mask = corrections.isin({"0", "00", "0.0"})
+        else:  # pragma: no cover - guarded by the static rule list
+            raise ValueError(f"Unsupported trade cleaning rule: {rule.rule_id}")
+
+        current, rejected, rule_diagnostics = apply_drop_rule(
+            current,
+            rule=rule,
+            keep_mask=keep_mask,
+        )
+        if not rejected.empty:
+            rejected_frames.append(rejected)
+        diagnostics.append(rule_diagnostics)
+
+    rejected_rows = (
+        pd.concat(rejected_frames, ignore_index=True)
+        if rejected_frames
+        else empty_rejected_frame(tuple(trades.columns))
+    )
+    return AuditedCleaningResult(
+        cleaned=current.reset_index(drop=True),
+        rejected=rejected_rows,
+        diagnostics=tuple(diagnostics),
+    )
 
 
 def summarize_trade_quality_warnings(

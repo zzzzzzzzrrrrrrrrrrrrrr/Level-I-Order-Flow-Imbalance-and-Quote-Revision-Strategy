@@ -14,8 +14,10 @@ dist/
 # Secrets and local overrides
 .env
 .env.*
+!.env.example
 *.local
 secrets/
+configs/local/
 
 # OS noise
 Thumbs.db

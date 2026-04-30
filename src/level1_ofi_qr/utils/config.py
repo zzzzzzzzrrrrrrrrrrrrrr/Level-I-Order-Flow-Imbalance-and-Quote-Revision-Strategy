@@ -9,6 +9,8 @@ from typing import Any
 
 import yaml
 
+MappingRule = str | dict[str, Any] | None
+
 
 @dataclass(frozen=True)
 class TimeRangeConfig:
@@ -26,12 +28,15 @@ class DataContractConfig:
     """Normalized column definitions and source mappings for a data slice."""
 
     quote_level: str
+    quote_scope: str
+    quote_source: str
+    trade_source: str
     separate_tables: bool
     shared_columns: tuple[str, ...]
     quote_columns: tuple[str, ...]
     trade_columns: tuple[str, ...]
-    quote_mapping: dict[str, str]
-    trade_mapping: dict[str, str]
+    quote_mapping: dict[str, MappingRule]
+    trade_mapping: dict[str, MappingRule]
 
 
 @dataclass(frozen=True)
@@ -75,6 +80,9 @@ def load_data_slice_config(config_path: str | Path) -> DataSliceConfig:
         ),
         data_contract=DataContractConfig(
             quote_level=data_contract["quote_level"],
+            quote_scope=data_contract["quote_scope"],
+            quote_source=data_contract["quote_source"],
+            trade_source=data_contract["trade_source"],
             separate_tables=bool(data_contract["separate_tables"]),
             shared_columns=tuple(data_contract["shared_columns"]),
             quote_columns=tuple(data_contract["quote_columns"]),

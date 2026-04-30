@@ -1,6 +1,6 @@
-event_time,symbol,source,quote_exchange,bid_exchange,ask_exchange,quote_condition,quote_sequence_number,natbbo_indicator,bid,ask,bid_size,ask_size
-2026-04-24T09:31:00-04:00,AAPL,wrds_taq_cqm,Q,Q,Q,I,201,1,100.00,106.00,500,600
-2026-04-24T09:31:01-04:00,AAPL,wrds_taq_cqm,Q,Q,Q,,202,4,100.00,100.00,300,0
-2026-04-24T09:31:02-04:00,AAPL,wrds_taq_cqm,Q,Q,Q,,203,1,-1.00,100.00,100,100
-2026-04-24T09:31:03-04:00,AAPL,wrds_taq_cqm,Q,Q,Q,,204,1,100.00,0.00,100,100
-2026-04-24T09:31:04-04:00,AAPL,wrds_taq_cqm,Q,Q,Q,,205,1,100.00,99.00,100,100
+event_time,symbol,source,bid_exchange,ask_exchange,nbbo_quote_condition,bid,ask,bid_size,ask_size
+2026-04-10T09:31:00-04:00,AAPL,wrds_taq_nbbom,Q,Q,R,100.00,106.00,500,600
+2026-04-10T09:31:01-04:00,AAPL,wrds_taq_nbbom,Q,Q,R,100.00,100.00,300,0
+2026-04-10T09:31:02-04:00,AAPL,wrds_taq_nbbom,Q,Q,R,-1.00,100.00,100,100
+2026-04-10T09:31:03-04:00,AAPL,wrds_taq_nbbom,Q,Q,R,100.00,0.00,100,100
+2026-04-10T09:31:04-04:00,AAPL,wrds_taq_nbbom,Q,Q,R,100.00,99.00,100,100

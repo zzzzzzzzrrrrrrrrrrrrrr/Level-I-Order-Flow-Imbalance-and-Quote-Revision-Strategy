@@ -17,8 +17,6 @@ TRADE_SIZE: Final[str] = "trade_size"
 TRADE_EXCHANGE: Final[str] = "trade_exchange"
 SALE_CONDITION: Final[str] = "sale_condition"
 TRADE_CORRECTION: Final[str] = "trade_correction"
-TRADE_ID: Final[str] = "trade_id"
-TRADE_SOURCE: Final[str] = "trade_source"
 TRADE_SEQUENCE_NUMBER: Final[str] = "trade_sequence_number"
 
 TRADE_COLUMNS: Final[tuple[str, ...]] = (
@@ -26,8 +24,6 @@ TRADE_COLUMNS: Final[tuple[str, ...]] = (
     TRADE_EXCHANGE,
     SALE_CONDITION,
     TRADE_CORRECTION,
-    TRADE_ID,
-    TRADE_SOURCE,
     TRADE_SEQUENCE_NUMBER,
     TRADE_PRICE,
     TRADE_SIZE,
@@ -47,8 +43,6 @@ def validate_trade_frame(trades: pd.DataFrame) -> pd.DataFrame:
         TRADE_PRICE,
         TRADE_SIZE,
         TRADE_CORRECTION,
-        TRADE_ID,
-        TRADE_SOURCE,
         TRADE_SEQUENCE_NUMBER,
     ]
     missing_mask = trades.loc[:, required_value_columns].isna()
@@ -57,8 +51,8 @@ def validate_trade_frame(trades: pd.DataFrame) -> pd.DataFrame:
         missing_counts = missing_counts[missing_counts > 0]
 
         raise SchemaValidationError(
-            "Trade rows must populate trade_price, trade_size, trade_correction, trade_id, "
-            "trade_source, and trade_sequence_number. "
+            "Trade rows must populate trade_price, trade_size, trade_correction, "
+            "and trade_sequence_number. "
             f"Missing counts: {missing_counts.to_dict()}"
         )
 

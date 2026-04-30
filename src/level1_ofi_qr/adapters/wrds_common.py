@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Mapping
+from typing import Any, Mapping
 
 import pandas as pd
 
@@ -10,6 +10,7 @@ from ..schema import SOURCE
 
 WRDS_EVENT_TIME_EXPRESSION = "date + time_m"
 WRDS_SYMBOL_EXPRESSION = "sym_root + sym_suffix"
+WrdsMappingRule = str | dict[str, Any] | None
 
 
 class WrdsNormalizationError(ValueError):
@@ -19,7 +20,7 @@ class WrdsNormalizationError(ValueError):
 def normalize_wrds_frame(
     raw_frame: pd.DataFrame,
     *,
-    mapping: Mapping[str, str],
+    mapping: Mapping[str, WrdsMappingRule],
     output_columns: tuple[str, ...],
     market_timezone: str,
 ) -> pd.DataFrame:
@@ -47,13 +48,23 @@ def materialize_wrds_mapped_series(
     raw_frame: pd.DataFrame,
     *,
     target_column: str,
-    mapping_value: str,
+    mapping_value: WrdsMappingRule,
     market_timezone: str,
 ) -> pd.Series:
     """Materialize one normalized column from a WRDS mapping expression."""
 
-    mapping_value = mapping_value.strip()
+    if mapping_value is None:
+        return pd.Series(pd.NA, index=raw_frame.index, dtype="string")
 
+    if isinstance(mapping_value, dict):
+        return materialize_wrds_structured_rule(
+            raw_frame,
+            target_column=target_column,
+            mapping_rule=mapping_value,
+            market_timezone=market_timezone,
+        )
+
+    mapping_value = mapping_value.strip()
     if target_column == SOURCE:
         return pd.Series(mapping_value, index=raw_frame.index, dtype="string")
 
@@ -70,6 +81,44 @@ def materialize_wrds_mapped_series(
         )
 
     return raw_frame[mapping_value].copy()
+
+
+def materialize_wrds_structured_rule(
+    raw_frame: pd.DataFrame,
+    *,
+    target_column: str,
+    mapping_rule: Mapping[str, Any],
+    market_timezone: str,
+) -> pd.Series:
+    """Materialize one normalized column from a structured WRDS mapping rule."""
+
+    if "literal" in mapping_rule:
+        return pd.Series(str(mapping_rule["literal"]), index=raw_frame.index, dtype="string")
+
+    expression = str(mapping_rule.get("expr", "")).strip()
+    if expression == "combine_date_time":
+        return build_wrds_event_time(
+            raw_frame,
+            market_timezone=str(mapping_rule.get("timezone", market_timezone)),
+            date_column=str(mapping_rule.get("date_col", "date")),
+            time_column=str(mapping_rule.get("time_col", "time_m")),
+        )
+
+    if expression == "concat_symbol":
+        empty_suffix_policy = str(mapping_rule.get("empty_suffix_policy", "omit"))
+        if empty_suffix_policy != "omit":
+            raise WrdsNormalizationError(
+                f"Unsupported empty_suffix_policy for '{target_column}': {empty_suffix_policy!r}."
+            )
+        return build_wrds_symbol(
+            raw_frame,
+            root_column=str(mapping_rule.get("root_col", "sym_root")),
+            suffix_column=str(mapping_rule.get("suffix_col", "sym_suffix")),
+        )
+
+    raise WrdsNormalizationError(
+        f"Unsupported WRDS mapping rule for normalized field '{target_column}': {mapping_rule!r}."
+    )
 
 
 def build_wrds_event_time(
@@ -91,7 +140,7 @@ def build_wrds_event_time(
         )
 
     timestamp_strings = date_values.astype("string") + " " + time_values.astype("string")
-    timestamps = pd.to_datetime(timestamp_strings, errors="coerce")
+    timestamps = pd.to_datetime(timestamp_strings, errors="coerce", format="mixed")
     if timestamps.isna().any():
         invalid_count = int(timestamps.isna().sum())
         raise WrdsNormalizationError(

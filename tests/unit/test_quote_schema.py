@@ -10,8 +10,6 @@ from level1_ofi_qr.schema import (
     BID,
     BID_EXCHANGE,
     QUOTE_COLUMNS,
-    QUOTE_EXCHANGE,
-    QUOTE_SEQUENCE_NUMBER,
     SchemaValidationError,
     validate_quote_frame,
 )
@@ -52,13 +50,4 @@ def test_validate_quote_frame_requires_bid_and_ask_exchange() -> None:
     quotes.loc[1, ASK_EXCHANGE] = pd.NA
 
     with pytest.raises(SchemaValidationError, match="bid_exchange|ask_exchange"):
-        validate_quote_frame(quotes)
-
-
-def test_validate_quote_frame_requires_quote_exchange_and_sequence_number() -> None:
-    quotes = load_fixture_frame()
-    quotes.loc[0, QUOTE_EXCHANGE] = pd.NA
-    quotes.loc[1, QUOTE_SEQUENCE_NUMBER] = pd.NA
-
-    with pytest.raises(SchemaValidationError, match="quote_exchange|quote_sequence_number"):
         validate_quote_frame(quotes)

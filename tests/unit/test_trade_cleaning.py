@@ -5,6 +5,7 @@ from pathlib import Path
 import pandas as pd
 
 from level1_ofi_qr.cleaning import (
+    clean_trades_v2,
     filter_trade_hard_constraints,
     summarize_trade_quality_warnings,
 )
@@ -26,6 +27,20 @@ def test_filter_trade_hard_constraints_removes_invalid_rows() -> None:
     assert diagnostics.removed_nonpositive_trade_price_rows == 1
     assert diagnostics.removed_nonpositive_trade_size_rows == 1
     assert diagnostics.output_rows == 2
+
+
+def test_clean_trades_v2_records_correction_rejections() -> None:
+    trades = load_fixture_frame().iloc[:1].copy()
+    trades = pd.concat([trades, trades.iloc[:1].copy()], ignore_index=True)
+    trades["event_time"] = pd.to_datetime(trades["event_time"])
+    trades["trade_correction"] = trades["trade_correction"].astype("string")
+    trades.loc[1, "trade_correction"] = "01"
+
+    result = clean_trades_v2(trades)
+
+    assert len(result.cleaned) == 1
+    assert len(result.rejected) == 1
+    assert result.rejected.loc[0, "rule_id"] == "T002_trade_correction"
 
 
 def test_summarize_trade_quality_warnings_flags_large_trades() -> None:
