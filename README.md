@@ -21,7 +21,7 @@ Execution-aware research scaffold for studying whether Level-I quote and trade i
 - Data, outputs, local agent state, and notebook files are ignored by default in `.gitignore`.
 - Stage 1 schema, WRDS normalization, cleaning primitives, and raw WRDS extraction scaffolding are implemented with unit tests.
 - The current AAPL WRDS slice uses `taqmsec.nbbom_YYYYMMDD` as the main quote source, so normalized quotes represent national BBO state: `bid_exchange`, `ask_exchange`, `bid`, `ask`, `bid_size`, and `ask_size`. Trades use `taqmsec.ctm_YYYYMMDD`.
-- Cleaning v2, quote-trade alignment v1, quote feature v1, trade signing v1, signed-flow feature v1, labeling v1, and signals v1 are implemented as separate auditable steps. Condition-code eligibility, walk-forward evaluation, and backtests are still separate unfinished stages.
+- Cleaning v2, quote-trade alignment v1, quote feature v1, trade signing v1, signed-flow feature v1, labeling v1, signals v1, and walk-forward evaluation v1 are implemented as separate auditable steps. Condition-code eligibility, threshold optimization, cost modeling, and backtests are still separate unfinished stages.
 
 ## WRDS extraction
 
@@ -149,3 +149,13 @@ D:\python_library_envs\VHFT_lab\python.exe scripts\build_signals.py configs\data
 ```
 
 Signals v1 builds an interpretable sequential gate from current quote imbalance, signed-flow imbalance, and quote revision. Default thresholds are diagnostic sign-agreement defaults, not optimized trading thresholds. Labels may be retained in the output for later evaluation, but labels are not used to compute signals. This step does not run walk-forward evaluation or backtests.
+
+## Walk-Forward Evaluation
+
+Run walk-forward statistical evaluation for signal v1 rows:
+
+```powershell
+D:\python_library_envs\VHFT_lab\python.exe scripts\run_walk_forward.py configs\data\aapl_wrds_20260408_20260410.yaml
+```
+
+Walk-forward evaluation v1 evaluates precomputed signals against future midquote labels using expanding training-date context and next-date test folds. It does not optimize thresholds, fit models, apply transaction costs, or run backtests.
