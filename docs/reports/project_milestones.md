@@ -17,7 +17,7 @@ cleaning -> alignment -> quote features -> trade signing -> signed flow
 -> labels -> signals -> walk-forward evaluation -> threshold selection
 -> cost diagnostics -> execution accounting -> target-position accounting
 -> parameter sensitivity -> TVT parameter selection -> backtest v1
--> model training v1
+-> model training v1 -> PnL reporting v1
 ```
 
 Status details live in:

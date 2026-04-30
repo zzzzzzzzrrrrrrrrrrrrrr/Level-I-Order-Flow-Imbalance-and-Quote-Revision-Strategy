@@ -254,6 +254,23 @@ and runs target-position accounting on the held-out test date. It writes
 `*_model_backtest_v1_summary.csv`, and related order / ledger / manifest files.
 This is an AAPL prototype loop, not a generalized research-grade model claim.
 
+## PnL Reporting
+
+Generate an SVG equity/PnL curve comparing the sequential-gate strategy and the
+linear-score model:
+
+```powershell
+D:\python_library_envs\VHFT_lab\python.exe scripts\plot_pnl.py configs\data\aapl_wrds_20260408_20260410.yaml
+```
+
+Outputs:
+
+```text
+outputs/figures/aapl_wrds_20260408_20260410_pnl_comparison.svg
+outputs/tables/aapl_wrds_20260408_20260410_pnl_comparison_summary.csv
+outputs/tables/aapl_wrds_20260408_20260410_pnl_comparison_curve.csv
+```
+
 ## Backtest
 
 Run backtest v1 for TVT-selected target-position accounting candidates:

@@ -37,6 +37,7 @@ Implemented stages:
 - train-validation-test parameter selection v1
 - backtest v1
 - model training v1
+- PnL reporting v1
 
 Not implemented:
 
@@ -460,6 +461,32 @@ Interpretation: the model loop reduces trading intensity and loss magnitude
 relative to the untrained rule-based target-position test result, but the
 selected AAPL prototype model remains negative after spread costs. This is a
 successful engineering loop, not a profitable strategy claim.
+
+## PnL Curve Comparison
+
+Generated PnL / equity curve:
+
+```text
+outputs/figures/aapl_wrds_20260408_20260410_pnl_comparison.svg
+```
+
+Generated comparison tables:
+
+```text
+outputs/tables/aapl_wrds_20260408_20260410_pnl_comparison_summary.csv
+outputs/tables/aapl_wrds_20260408_20260410_pnl_comparison_curve.csv
+```
+
+Comparison:
+
+| strategy | orders | final equity | total cost | max drawdown |
+| --- | ---: | ---: | ---: | ---: |
+| `sequential_gate` | `13,846` | `-141.950` | `157.785` | `141.950` |
+| `linear_score` | `5,682` | `-37.820` | `49.710` | `37.820` |
+
+The linear-score model has lower turnover, lower cost, and a smaller loss than
+the sequential-gate strategy in this AAPL prototype. Both curves remain below
+zero after the current spread-cost accounting.
 
 ## Known Limitations
 
