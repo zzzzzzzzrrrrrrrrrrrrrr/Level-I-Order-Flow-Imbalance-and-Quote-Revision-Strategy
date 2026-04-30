@@ -14,8 +14,8 @@ quote source = WRDS TAQ NBBOM
 trade source = WRDS TAQ CTM
 ```
 
-This report records the local pipeline run through target-position accounting
-v1 diagnostics. It is not a research-grade backtest report.
+This report records the local pipeline run through train-validation-test
+parameter selection v1. It is not a research-grade backtest report.
 
 ## Pipeline Status
 
@@ -34,6 +34,7 @@ Implemented stages:
 - execution accounting v1 scaffold
 - target-position accounting v1 scaffold
 - parameter sensitivity v1
+- train-validation-test parameter selection v1
 
 Not implemented:
 
@@ -42,7 +43,7 @@ Not implemented:
 - research-grade execution-aware backtest
 - broker / SEC / FINRA / exchange fee modeling
 - advanced position limits and risk controls
-- train-window parameter optimization
+- final hyperparameter selection claim
 
 ## Data Quality Summary
 
@@ -318,6 +319,36 @@ This sensitivity run reports all configured candidates and does not choose a
 final parameter. It is a framework check showing how account outcomes change
 under a predeclared cost stress, not a train-window hyperparameter selection.
 
+## Train-Validation-Test Parameter Selection
+
+Policy:
+
+```text
+split_policy = expanding_train_next_validation_next_test
+selection_policy = select_on_validation_evaluate_once_on_test
+objective = maximize_validation_final_equity
+test_used_for_selection = false
+```
+
+Current three-day AAPL fold:
+
+```text
+train      = 2026-04-08
+validation = 2026-04-09
+test       = 2026-04-10
+```
+
+Candidate results:
+
+| candidate | selected | fixed bps | validation final equity | validation cost | validation orders | test final equity | test cost | test orders |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `candidate_0001` | yes | `0.0` | `-167.810` | `180.915` | `13,987` | `-141.950` | `157.785` | `13,846` |
+| `candidate_0002` | no | `1.0` | `-530.158` | `543.263` | `13,987` |  |  |  |
+
+The selected candidate was chosen only on the validation date. The frozen
+candidate remained negative on the test date. This is a clean selection-flow
+check, not a final hyperparameter or profitability claim.
+
 ## Known Limitations
 
 - NBBO quote-condition eligibility remains diagnostic-only.
@@ -334,3 +365,5 @@ under a predeclared cost stress, not a train-window hyperparameter selection.
   optimization, latency modeling, passive execution, or official fee schedules.
 - Parameter sensitivity v1 reports candidates but does not select final
   hyperparameters.
+- TVT parameter selection v1 selects on validation and evaluates test once, but
+  does not train a predictive model or make a final hyperparameter claim.

@@ -211,6 +211,21 @@ hyperparameters.
 | default slippage ticks grid | `0` | cost_rule / stress_test | baseline no extra slippage in smoke grid | required | implemented |
 | final parameter selection | not implemented | research_design | must be train-window selected later | required | unresolved |
 
+## Train-Validation-Test Selection Assumptions
+
+TVT parameter selection v1 chooses accounting parameters on validation dates
+and evaluates frozen choices on test dates.
+
+| Parameter | Current value | Type | Source / rationale | Sensitivity required | Status |
+| --- | --- | --- | --- | --- | --- |
+| split policy | expanding train, next validation, next test | methodology | separates selection and final evaluation dates | not_applicable | implemented |
+| min train dates | `1` | research_design | small three-day demonstration slice | required | provisional |
+| validation objective | maximize validation final equity | research_design | simple account-level objective for v1 | required | implemented |
+| tie-break policy | higher validation equity, lower cost, lower order count | research_design | deterministic selection among equal candidates | required | implemented |
+| test leakage policy | test date not used for selection | methodology | avoids full-sample parameter choice | not_applicable | implemented |
+| model training | not implemented | research_design | v1 selects accounting parameters only | required | unresolved |
+| final hyperparameter claim | false | research_design | AAPL three-day slice is not final evidence | not_applicable | implemented |
+
 ## Backtest Assumptions
 
 Backtest v1 is not implemented yet. Parameters must be registered before use:

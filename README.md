@@ -225,3 +225,16 @@ Parameter sensitivity v1 reports every configured candidate and writes
 `*_parameter_sensitivity_v1.csv` plus `*_parameter_sensitivity_v1_manifest.json`.
 It does not select final hyperparameters. Larger grids should be passed
 explicitly through the CLI and treated as sensitivity, not optimization.
+
+## TVT Parameter Selection
+
+Run train-validation-test parameter selection for target-position accounting:
+
+```powershell
+D:\python_library_envs\VHFT_lab\python.exe scripts\run_tvt_parameter_selection.py configs\data\aapl_wrds_20260408_20260410.yaml
+```
+
+TVT parameter selection v1 uses expanding train dates, selects parameters on the
+next validation date, and evaluates the frozen selected candidate on the next
+test date. In the current version, no predictive model is trained and no final
+hyperparameter claim is made.

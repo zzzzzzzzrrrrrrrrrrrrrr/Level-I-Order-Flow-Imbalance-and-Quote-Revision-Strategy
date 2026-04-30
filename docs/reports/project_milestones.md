@@ -16,7 +16,7 @@ Current implemented pipeline:
 cleaning -> alignment -> quote features -> trade signing -> signed flow
 -> labels -> signals -> walk-forward evaluation -> threshold selection
 -> cost diagnostics -> execution accounting -> target-position accounting
--> parameter sensitivity
+-> parameter sensitivity -> TVT parameter selection
 ```
 
 Status details live in:
@@ -28,4 +28,4 @@ Status details live in:
 
 Still separate and not final at this date: condition-code eligibility filters,
 research-grade backtesting, official fee modeling, passive execution, latency
-modeling, and train-window parameter selection.
+modeling, model training, and final hyperparameter selection.
