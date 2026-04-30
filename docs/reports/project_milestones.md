@@ -20,6 +20,15 @@ cleaning -> alignment -> quote features -> trade signing -> signed flow
 -> model training v1 -> PnL reporting v1
 ```
 
+Additional data configuration prepared:
+
+```text
+configs/data/aapl_wrds_20260313_20260410.yaml
+```
+
+This expanded AAPL prototype slice covers 20 trading dates and is intended for
+the next extraction / build run before adding more complex ML models.
+
 Status details live in:
 
 - `docs/reports/aapl_wrds_20260408_20260410_pipeline_report.md`

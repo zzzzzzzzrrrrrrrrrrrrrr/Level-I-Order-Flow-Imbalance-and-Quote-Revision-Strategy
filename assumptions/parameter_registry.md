@@ -36,12 +36,25 @@ trade_table = taqmsec.ctm_YYYYMMDD
 This is a three-day AAPL demonstration and validation slice. It is not evidence
 that a U.S. equity Level-I strategy is broadly validated.
 
+Expanded AAPL prototype config:
+
+```text
+config = configs/data/aapl_wrds_20260313_20260410.yaml
+symbol = AAPL
+trading_dates = 20 regular-session dates from 2026-03-13 through 2026-04-10
+excluded_date = 2026-04-03
+```
+
+This expanded config is intended to provide enough AAPL observations for
+prototype train / validation / test work before adding new ML model families.
+
 ## Data Extraction Assumptions
 
 | Parameter | Current value | Type | Source / rationale | Sensitivity required | Status |
 | --- | --- | --- | --- | --- | --- |
 | symbol universe | `AAPL` | research_design | liquid large-cap demonstration slice | required | provisional |
 | trading dates | `2026-04-08` to `2026-04-10` | research_design | latest available WRDS sample at time of setup | required | provisional |
+| expanded AAPL dates | `2026-03-13` to `2026-04-10`, excluding `2026-04-03` | research_design | larger single-symbol prototype before adding ML complexity | required | config_added |
 | quote table | `taqmsec.nbbom_YYYYMMDD` | data_rule | national BBO quote state needed for midquote/QI/QR | not_applicable | implemented |
 | trade table | `taqmsec.ctm_YYYYMMDD` | data_rule | consolidated trade messages | not_applicable | implemented |
 | session | regular market hours | research_design / market_rule | current pipeline uses configured regular session | required | implemented |

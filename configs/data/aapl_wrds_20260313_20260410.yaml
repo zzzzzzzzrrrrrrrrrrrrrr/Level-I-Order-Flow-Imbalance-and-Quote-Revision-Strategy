@@ -1,0 +1,120 @@
+slice_name: aapl_wrds_20260313_20260410
+purpose: aapl_prototype_data_expansion
+research_status: prototype_expansion
+
+source:
+  provider: wrds
+  dataset_family: taq
+  quote_dataset: nbbom
+  trade_dataset: ctm
+  asset_class: us_equities
+  venue_scope: consolidated
+
+universe:
+  symbols:
+    - AAPL
+
+time_range:
+  trading_dates:
+    - 2026-03-13
+    - 2026-03-16
+    - 2026-03-17
+    - 2026-03-18
+    - 2026-03-19
+    - 2026-03-20
+    - 2026-03-23
+    - 2026-03-24
+    - 2026-03-25
+    - 2026-03-26
+    - 2026-03-27
+    - 2026-03-30
+    - 2026-03-31
+    - 2026-04-01
+    - 2026-04-02
+    - 2026-04-06
+    - 2026-04-07
+    - 2026-04-08
+    - 2026-04-09
+    - 2026-04-10
+  session: regular_market_hours
+  market_open: "09:30:00"
+  market_close: "16:00:00"
+  timezone: America/New_York
+
+data_contract:
+  quote_level: level_1
+  quote_scope: national_bbo
+  quote_source: wrds_taq_nbbom
+  trade_source: wrds_taq_ctm
+  separate_tables: true
+  shared_columns:
+    - event_time
+    - symbol
+    - source
+  quote_columns:
+    - event_time
+    - symbol
+    - source
+    - bid_exchange
+    - ask_exchange
+    - nbbo_quote_condition
+    - bid
+    - ask
+    - bid_size
+    - ask_size
+  trade_columns:
+    - event_time
+    - symbol
+    - source
+    - trade_exchange
+    - sale_condition
+    - trade_correction
+    - trade_sequence_number
+    - trade_price
+    - trade_size
+
+  quote_mapping:
+    event_time:
+      expr: combine_date_time
+      date_col: date
+      time_col: time_m
+      timezone: America/New_York
+    symbol:
+      expr: concat_symbol
+      root_col: sym_root
+      suffix_col: sym_suffix
+    empty_suffix_policy: omit
+    bid_exchange: best_bidex
+    ask_exchange: best_askex
+    nbbo_quote_condition: nbbo_qu_cond
+    bid: best_bid
+    ask: best_ask
+    bid_size: best_bidsiz
+    ask_size: best_asksiz
+    source:
+      literal: wrds_taq_nbbom
+
+  trade_mapping:
+    event_time:
+      expr: combine_date_time
+      date_col: date
+      time_col: time_m
+      timezone: America/New_York
+    symbol:
+      expr: concat_symbol
+      root_col: sym_root
+      suffix_col: sym_suffix
+      empty_suffix_policy: omit
+    trade_price: price
+    trade_size: size
+    trade_exchange: ex
+    sale_condition: tr_scond
+    trade_correction: tr_corr
+    trade_sequence_number: tr_seqnum
+    source:
+      literal: wrds_taq_ctm
+
+storage:
+  raw_dir: data/raw
+  interim_dir: data/interim
+  processed_dir: data/processed

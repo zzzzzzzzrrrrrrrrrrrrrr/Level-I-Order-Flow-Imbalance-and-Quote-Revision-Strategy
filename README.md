@@ -73,12 +73,25 @@ For the full AAPL slice, omit `--limit-per-query` and write raw outputs to a sli
 D:\python_library_envs\VHFT_lab\python.exe scripts\extract_wrds.py configs\data\aapl_wrds_20260408_20260410.yaml --output-dir data\raw\aapl_wrds_20260408_20260410
 ```
 
+The expanded AAPL prototype slice uses 20 trading dates from `2026-03-13`
+through `2026-04-10`, excluding the `2026-04-03` market holiday:
+
+```powershell
+D:\python_library_envs\VHFT_lab\python.exe scripts\extract_wrds.py configs\data\aapl_wrds_20260313_20260410.yaml --output-dir data\raw\aapl_wrds_20260313_20260410
+```
+
 ## Dataset build
 
 Build normalized and cleaned datasets from raw WRDS CSV outputs:
 
 ```powershell
 D:\python_library_envs\VHFT_lab\python.exe scripts\build_dataset.py configs\data\aapl_wrds_20260408_20260410.yaml
+```
+
+For the expanded AAPL slice:
+
+```powershell
+D:\python_library_envs\VHFT_lab\python.exe scripts\build_dataset.py configs\data\aapl_wrds_20260313_20260410.yaml
 ```
 
 The build writes normalized files under `data/interim/<slice_name>/`; cleaned files, rejected-row audit files, and a diagnostics manifest under `data/processed/<slice_name>/`. If you are building from the small validation extract instead of the full slice, pass `--raw-dir data\raw\validation_structured_contract`.
