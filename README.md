@@ -21,6 +21,7 @@ Execution-aware research scaffold for studying whether Level-I quote and trade i
 - Data, outputs, local agent state, and notebook files are ignored by default in `.gitignore`.
 - Stage 1 schema, WRDS normalization, cleaning primitives, and raw WRDS extraction scaffolding are implemented with unit tests.
 - The current AAPL WRDS slice uses `taqmsec.nbbom_YYYYMMDD` as the main quote source, so normalized quotes represent national BBO state: `bid_exchange`, `ask_exchange`, `bid`, `ask`, `bid_size`, and `ask_size`. Trades use `taqmsec.ctm_YYYYMMDD`.
+- Cleaning v2, quote-trade alignment v1, quote feature v1, and trade signing v1 are implemented as separate auditable steps. Condition-code eligibility, OFI aggregation, labels, and backtests are still separate unfinished stages.
 
 ## WRDS extraction
 
@@ -108,3 +109,13 @@ D:\python_library_envs\VHFT_lab\python.exe scripts\build_quote_features.py confi
 ```
 
 Quote feature v1 computes row-preserving, quote-only features from cleaned Level-I quotes. It supports spread, depth, signed top-of-book imbalance, quote revision, and quote event interval diagnostics. It does not compute trade signing, signed order flow imbalance, labels, or backtest signals.
+
+## Trade Signing
+
+Build trade signing v1 output from aligned trades:
+
+```powershell
+D:\python_library_envs\VHFT_lab\python.exe scripts\sign_trades.py configs\data\aapl_wrds_20260408_20260410.yaml
+```
+
+Trade signing v1 uses quote rule with tick-rule fallback on aligned trade rows. It preserves all aligned trades and writes `*_trades_signed_v1.csv` plus `*_trade_signing_v1_manifest.json`. It does not apply sale-condition filters, NBBO condition filters, OFI aggregation, labels, or backtest signals.
