@@ -11,6 +11,26 @@ from .walk_forward import (
     WalkForwardEvaluationResult,
     evaluate_signals_walk_forward_v1,
 )
+from .threshold_selection import (
+    DEFAULT_QI_THRESHOLD_GRID,
+    DEFAULT_QR_THRESHOLD_BPS_GRID,
+    DEFAULT_SIGNED_FLOW_THRESHOLD_GRID,
+    LABEL_USAGE_POLICY as THRESHOLD_LABEL_USAGE_POLICY,
+    SIGNAL_CONSTRUCTION_POLICY,
+    THRESHOLD_OBJECTIVE,
+    THRESHOLD_SELECTION_POLICY,
+    THRESHOLD_SELECTION_POLICY_NOTE,
+    ThresholdSelectionConfig,
+    ThresholdSelectionDiagnostics,
+    ThresholdSelectionError,
+    ThresholdSelectionResult,
+    run_threshold_selection_v1,
+)
+from .threshold_workflow import (
+    ThresholdSelectionBuildResult,
+    ThresholdSelectionOutputPaths,
+    build_threshold_selection,
+)
 from .workflow import (
     WalkForwardBuildResult,
     WalkForwardInputPaths,
@@ -22,9 +42,23 @@ from .workflow import (
 
 __all__ = [
     "EVALUATION_POLICY",
+    "DEFAULT_QI_THRESHOLD_GRID",
+    "DEFAULT_QR_THRESHOLD_BPS_GRID",
+    "DEFAULT_SIGNED_FLOW_THRESHOLD_GRID",
     "LABEL_USAGE_POLICY",
     "SIGNAL_USAGE_POLICY",
+    "SIGNAL_CONSTRUCTION_POLICY",
+    "THRESHOLD_LABEL_USAGE_POLICY",
+    "THRESHOLD_OBJECTIVE",
+    "THRESHOLD_SELECTION_POLICY",
+    "THRESHOLD_SELECTION_POLICY_NOTE",
     "WALK_FORWARD_POLICY_NOTE",
+    "ThresholdSelectionBuildResult",
+    "ThresholdSelectionConfig",
+    "ThresholdSelectionDiagnostics",
+    "ThresholdSelectionError",
+    "ThresholdSelectionOutputPaths",
+    "ThresholdSelectionResult",
     "WalkForwardBuildResult",
     "WalkForwardConfig",
     "WalkForwardDiagnostics",
@@ -33,7 +67,9 @@ __all__ = [
     "WalkForwardInputPaths",
     "WalkForwardOutputPaths",
     "WalkForwardWorkflowError",
+    "build_threshold_selection",
     "build_walk_forward_evaluation",
     "evaluate_signals_walk_forward_v1",
     "find_walk_forward_input",
+    "run_threshold_selection_v1",
 ]

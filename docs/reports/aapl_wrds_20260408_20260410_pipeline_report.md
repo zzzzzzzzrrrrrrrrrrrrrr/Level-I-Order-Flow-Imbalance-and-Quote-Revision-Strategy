@@ -123,11 +123,46 @@ Aggregate evaluation-fold results:
 These results are statistical diagnostics only. They are not cost-adjusted and
 must not be presented as tradable PnL.
 
+## Threshold Selection
+
+Policy:
+
+```text
+threshold_selection_policy = train_window_grid_search_next_date_test
+threshold_objective = maximize_train_mean_signal_aligned_return_bps
+signal_construction_policy = recompute_sequential_gate_from_selected_thresholds
+label_usage_policy = train_labels_for_threshold_selection_test_labels_for_evaluation
+```
+
+Default grid:
+
+```text
+qi_threshold_grid = 0.0, 0.1, 0.25
+signed_flow_threshold_grid = 0.0, 0.1, 0.25
+qr_threshold_bps_grid = 0.0, 0.1, 0.25
+min_train_signals = 100
+```
+
+Selected thresholds and test results:
+
+| fold | horizon | QI | signed-flow | QR bps | test mean aligned return bps | test accuracy |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| `fold_001` | `100ms` | `0.25` | `0.25` | `0.25` | `0.3825` | `0.5688` |
+| `fold_001` | `500ms` | `0.25` | `0.10` | `0.25` | `-0.0220` | `0.5191` |
+| `fold_001` | `1s` | `0.25` | `0.25` | `0.10` | `0.2103` | `0.4850` |
+| `fold_001` | `5s` | `0.25` | `0.10` | `0.25` | `2.2773` | `0.4993` |
+| `fold_002` | `100ms` | `0.25` | `0.25` | `0.25` | `0.3909` | `0.5322` |
+| `fold_002` | `500ms` | `0.00` | `0.25` | `0.25` | `0.3974` | `0.4898` |
+| `fold_002` | `1s` | `0.25` | `0.10` | `0.25` | `0.4187` | `0.5289` |
+| `fold_002` | `5s` | `0.25` | `0.10` | `0.25` | `0.3637` | `0.6494` |
+
+This remains a statistical threshold-selection result. It is not a costed
+trading result.
+
 ## Known Limitations
 
 - NBBO quote-condition eligibility remains diagnostic-only.
 - Sale-condition eligibility remains unresolved.
 - Quote size unit interpretation is not independently finalized.
-- Signal thresholds are diagnostic defaults, not training-window-selected.
 - There is no transaction cost model.
 - There is no execution-aware backtest.
