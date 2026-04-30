@@ -4,6 +4,8 @@
 
 Accepted.
 
+Recorded: 2026-04-30.
+
 ## Context
 
 The project now has enough configurable assumptions that keeping them only in
@@ -30,8 +32,8 @@ and major assumption-policy changes.
 ## Consequences
 
 Every meaningful new parameter should be added to the registry in the same task
-that introduces it. Stage-specific docs can summarize the parameter locally, but
-the registry is the central inventory.
+that introduces it. Stage-specific docs may reference the registry, but they
+should not duplicate the full parameter table.
 
 This adds one more top-level directory, but it reduces the chance that
 thresholds, horizons, cost assumptions, and unresolved data rules are hidden in

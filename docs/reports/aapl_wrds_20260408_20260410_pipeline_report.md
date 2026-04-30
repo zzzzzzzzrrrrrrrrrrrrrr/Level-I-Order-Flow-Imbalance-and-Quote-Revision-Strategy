@@ -1,5 +1,7 @@
 # AAPL WRDS 2026-04-08 to 2026-04-10 Pipeline Report
 
+Recorded: 2026-04-30.
+
 ## Scope
 
 Data slice:
@@ -12,8 +14,8 @@ quote source = WRDS TAQ NBBOM
 trade source = WRDS TAQ CTM
 ```
 
-This report records the local pipeline run through walk-forward statistical
-evaluation. It is not a backtest report.
+This report records the local pipeline run through cost model v1 diagnostics.
+It is not a backtest report.
 
 ## Pipeline Status
 
@@ -27,14 +29,16 @@ Implemented stages:
 - labeling v1
 - signals v1
 - walk-forward evaluation v1
+- threshold selection v1
+- cost model v1 diagnostics
 
 Not implemented:
 
 - condition-code final eligibility filters
-- threshold optimization
 - model fitting
-- transaction cost model
 - execution-aware backtest
+- broker / SEC / FINRA / exchange fee modeling
+- position accounting
 
 ## Data Quality Summary
 
@@ -159,10 +163,49 @@ Selected thresholds and test results:
 This remains a statistical threshold-selection result. It is not a costed
 trading result.
 
+## Cost Model Diagnostics
+
+Policy:
+
+```text
+cost_model_policy = spread_and_stress_cost_diagnostics_v1
+execution_cost_policy = aggressive_one_way_half_spread_proxy
+round_trip_cost_policy = aggressive_entry_exit_full_spread_proxy
+```
+
+Default stress grid:
+
+```text
+fixed_bps_grid = 0.0, 0.5, 1.0, 2.0, 5.0
+slippage_ticks_grid = 0.0, 0.5, 1.0
+tick_size = 0.01
+```
+
+Base scenario with `fixed_bps = 0.0` and `slippage_ticks = 0.0`:
+
+| horizon | evaluated signals | mean signed future return bps | mean half-spread cost bps | mean after one-way cost bps | share beating one-way cost | mean after round-trip cost bps |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| `100ms` | `54,707` | `0.1952` | `0.5758` | `-0.3806` | `0.2055` | `-0.9564` |
+| `500ms` | `54,647` | `0.1863` | `0.5755` | `-0.3892` | `0.2502` | `-0.9647` |
+| `1s` | `54,599` | `0.2149` | `0.5756` | `-0.3607` | `0.2899` | `-0.9362` |
+| `5s` | `54,508` | `0.2003` | `0.5756` | `-0.3753` | `0.3942` | `-0.9509` |
+
+Interpretation: cost diagnostics show that the current Level-I directional
+signal does not generate sufficient average future midquote movement to overcome
+a one-way half-spread execution assumption. Under the base spread-only scenario,
+average post-cost outcomes are negative across `100ms`, `500ms`, `1s`, and `5s`
+horizons.
+
+Cost model v1 should therefore be interpreted as a rejection diagnostic for the
+current naive signal configuration, not as a profitability test. The framework
+now has a cost-aware filter for signal specifications before any execution or
+PnL claims are made.
+
 ## Known Limitations
 
 - NBBO quote-condition eligibility remains diagnostic-only.
 - Sale-condition eligibility remains unresolved.
 - Quote size unit interpretation is not independently finalized.
-- There is no transaction cost model.
-- There is no execution-aware backtest.
+- Cost model v1 is diagnostic-only and excludes official broker, SEC, FINRA,
+  exchange fee, rebate, and routing assumptions.
+- There is no execution-aware backtest or position accounting.

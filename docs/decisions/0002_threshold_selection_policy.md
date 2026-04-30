@@ -4,6 +4,8 @@
 
 Accepted.
 
+Recorded: 2026-04-30.
+
 ## Context
 
 Signals v1 used diagnostic sign-agreement thresholds:

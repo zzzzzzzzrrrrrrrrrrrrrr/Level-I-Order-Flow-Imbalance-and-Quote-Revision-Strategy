@@ -22,7 +22,7 @@ Execution-aware research scaffold for studying whether Level-I quote and trade i
 - Data, outputs, local agent state, and notebook files are ignored by default in `.gitignore`.
 - Stage 1 schema, WRDS normalization, cleaning primitives, and raw WRDS extraction scaffolding are implemented with unit tests.
 - The current AAPL WRDS slice uses `taqmsec.nbbom_YYYYMMDD` as the main quote source, so normalized quotes represent national BBO state: `bid_exchange`, `ask_exchange`, `bid`, `ask`, `bid_size`, and `ask_size`. Trades use `taqmsec.ctm_YYYYMMDD`.
-- Cleaning v2, quote-trade alignment v1, quote feature v1, trade signing v1, signed-flow feature v1, labeling v1, signals v1, walk-forward evaluation v1, threshold selection v1, and the assumption registry are implemented as separate auditable artifacts. Condition-code eligibility, cost modeling, and backtests are still separate unfinished stages.
+- Cleaning v2, quote-trade alignment v1, quote feature v1, trade signing v1, signed-flow feature v1, labeling v1, signals v1, walk-forward evaluation v1, threshold selection v1, cost model v1, and the assumption registry are implemented as separate auditable artifacts. Condition-code eligibility and backtests are still separate unfinished stages.
 
 ## WRDS extraction
 
@@ -170,3 +170,17 @@ D:\python_library_envs\VHFT_lab\python.exe scripts\run_threshold_selection.py co
 ```
 
 Threshold selection v1 selects QI, signed-flow, and QR thresholds inside each walk-forward training window, then evaluates the selected thresholds on the next test date. It does not fit predictive models, apply transaction costs, or run backtests.
+
+## Cost Model
+
+Run spread and stress cost diagnostics for active signal rows:
+
+```powershell
+D:\python_library_envs\VHFT_lab\python.exe scripts\run_cost_model.py configs\data\aapl_wrds_20260408_20260410.yaml
+```
+
+Cost model v1 estimates one-way half-spread, round-trip full-spread, fixed-bps,
+and slippage-tick stress costs. It writes `*_cost_model_v1.csv` and
+`*_cost_model_v1_manifest.json`. Treat it as a cost-aware rejection diagnostic,
+not a profitability test. It does not simulate orders, position accounting,
+broker fees, exchange fees/rebates, SEC/FINRA fees, or risk controls.

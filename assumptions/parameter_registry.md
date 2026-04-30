@@ -147,14 +147,15 @@ None, 5s, 1s, 500ms, 100ms
 
 ## Cost Model Assumptions
 
-Cost model v1 is not implemented yet. Planned parameters:
+Cost model v1 is a diagnostic cost layer, not a backtest.
 
-| Parameter | Planned value | Type | Source / rationale | Sensitivity required | Status |
+| Parameter | Current value | Type | Source / rationale | Sensitivity required | Status |
 | --- | --- | --- | --- | --- | --- |
-| half-spread cost | data-derived | cost_rule | aggressive one-way crossing proxy | required | planned |
-| full-spread round trip | data-derived | cost_rule | aggressive entry + exit proxy | required | planned |
-| fixed bps stress grid | `0`, `0.5`, `1`, `2`, `5` bps | cost_rule / stress_test | conservative cost stress | required | planned |
-| slippage ticks grid | TBD | cost_rule / stress_test | latency/adverse-selection proxy | required | planned |
+| half-spread cost | data-derived | cost_rule | aggressive one-way crossing proxy | required | implemented |
+| full-spread round trip | data-derived | cost_rule | aggressive entry + exit proxy | required | implemented |
+| fixed bps stress grid | `0`, `0.5`, `1`, `2`, `5` bps | cost_rule / stress_test | conservative cost stress, not an official fee schedule | required | implemented |
+| slippage ticks grid | `0`, `0.5`, `1` ticks | cost_rule / stress_test | latency/adverse-selection proxy, not a latency model | required | implemented |
+| tick size proxy | `$0.01` | cost_rule / stress_test | U.S. equity penny tick proxy for v1 diagnostics | required | provisional |
 | broker commission | TBD | cost_rule | broker official schedule if used | required | unresolved |
 | SEC / FINRA fees | TBD | cost_rule | official fee schedules if used | required | unresolved |
 | exchange fee / rebate | TBD | cost_rule | venue-specific, not reliable without routing model | optional | unresolved |

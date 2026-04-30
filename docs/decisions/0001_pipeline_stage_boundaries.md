@@ -4,6 +4,8 @@
 
 Accepted.
 
+Recorded: 2026-04-30.
+
 ## Context
 
 The project now has a working WRDS TAQ pipeline through statistical
