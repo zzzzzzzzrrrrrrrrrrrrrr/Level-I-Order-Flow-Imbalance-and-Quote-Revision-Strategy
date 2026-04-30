@@ -21,7 +21,7 @@ Execution-aware research scaffold for studying whether Level-I quote and trade i
 - Data, outputs, local agent state, and notebook files are ignored by default in `.gitignore`.
 - Stage 1 schema, WRDS normalization, cleaning primitives, and raw WRDS extraction scaffolding are implemented with unit tests.
 - The current AAPL WRDS slice uses `taqmsec.nbbom_YYYYMMDD` as the main quote source, so normalized quotes represent national BBO state: `bid_exchange`, `ask_exchange`, `bid`, `ask`, `bid_size`, and `ask_size`. Trades use `taqmsec.ctm_YYYYMMDD`.
-- Cleaning v2, quote-trade alignment v1, quote feature v1, trade signing v1, and signed-flow feature v1 are implemented as separate auditable steps. Condition-code eligibility, labels, and backtests are still separate unfinished stages.
+- Cleaning v2, quote-trade alignment v1, quote feature v1, trade signing v1, signed-flow feature v1, and labeling v1 are implemented as separate auditable steps. Condition-code eligibility, signal rules, walk-forward evaluation, and backtests are still separate unfinished stages.
 
 ## WRDS extraction
 
@@ -129,3 +129,13 @@ D:\python_library_envs\VHFT_lab\python.exe scripts\build_signed_flow_features.py
 ```
 
 Signed-flow feature v1 computes row-preserving trade-flow features over trailing event-count and clock-time windows within `symbol` and `trading_date`. Windows include the current trade print; unknown-sign trades contribute zero signed flow while remaining in total trade volume. It does not apply condition-code filters, construct labels, or run backtests.
+
+## Labels
+
+Build future midquote labels for signed-flow feature rows:
+
+```powershell
+D:\python_library_envs\VHFT_lab\python.exe scripts\build_labels.py configs\data\aapl_wrds_20260408_20260410.yaml
+```
+
+Labeling v1 creates future midquote return and direction targets from quote feature data. Labels are computed strictly after `decision_time` and must not be used as features. This step does not create trading signals, run walk-forward evaluation, or run backtests.
