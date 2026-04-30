@@ -196,6 +196,21 @@ is not hyperparameter selection.
 | cost deduction | half spread + fixed bps + slippage ticks | cost_rule / stress_test | aligned with cost model v1 | required | implemented |
 | parameter optimization | not implemented | research_design | must be train-window selected later | required | unresolved |
 
+## Parameter Sensitivity Assumptions
+
+Parameter sensitivity v1 reports candidate grids but does not choose final
+hyperparameters.
+
+| Parameter | Current value | Type | Source / rationale | Sensitivity required | Status |
+| --- | --- | --- | --- | --- | --- |
+| sensitivity policy | exhaustive grid report, no selection | research_design | avoids manual cherry-picking | not_applicable | implemented |
+| default max position grid | `1` | research_design | bounded smoke-check grid | required | implemented |
+| default cooldown grid | `0ms` | research_design | baseline no-delay scaffold check | required | implemented |
+| default max trades per day grid | none | research_design | baseline unrestricted daily trade count | required | implemented |
+| default fixed bps grid | `0`, `1` | cost_rule / stress_test | small base/stress cost comparison | required | implemented |
+| default slippage ticks grid | `0` | cost_rule / stress_test | baseline no extra slippage in smoke grid | required | implemented |
+| final parameter selection | not implemented | research_design | must be train-window selected later | required | unresolved |
+
 ## Backtest Assumptions
 
 Backtest v1 is not implemented yet. Parameters must be registered before use:

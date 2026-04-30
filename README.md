@@ -212,3 +212,16 @@ flat-on-no-signal, EOD flat, cooldown, and optional max-trades controls, and
 writes orders, ledger, summary, and manifest artifacts. It is the safer account
 state scaffold for later sensitivity tests, but it is not hyperparameter
 selection or a research-grade backtest.
+
+## Parameter Sensitivity
+
+Run a predeclared sensitivity grid over target-position accounting parameters:
+
+```powershell
+D:\python_library_envs\VHFT_lab\python.exe scripts\run_parameter_sensitivity.py configs\data\aapl_wrds_20260408_20260410.yaml
+```
+
+Parameter sensitivity v1 reports every configured candidate and writes
+`*_parameter_sensitivity_v1.csv` plus `*_parameter_sensitivity_v1_manifest.json`.
+It does not select final hyperparameters. Larger grids should be passed
+explicitly through the CLI and treated as sensitivity, not optimization.

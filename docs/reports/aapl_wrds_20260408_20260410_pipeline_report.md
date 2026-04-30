@@ -33,6 +33,7 @@ Implemented stages:
 - cost model v1 diagnostics
 - execution accounting v1 scaffold
 - target-position accounting v1 scaffold
+- parameter sensitivity v1
 
 Not implemented:
 
@@ -287,6 +288,36 @@ negative after spread costs. This is still not hyperparameter selection: no
 threshold, cooldown, spread filter, depth filter, or cost assumption was chosen
 inside a train window.
 
+## Parameter Sensitivity
+
+Policy:
+
+```text
+parameter_sensitivity_policy = exhaustive_grid_report_no_selection_v1
+parameter_selection_policy = no_parameter_selection
+```
+
+Default smoke grid:
+
+```text
+max_position_grid = 1
+cooldown_grid = 0ms
+max_trades_per_day_grid = none
+fixed_bps_grid = 0.0, 1.0
+slippage_ticks_grid = 0.0
+```
+
+Candidate results:
+
+| candidate | max position | cooldown | max trades/day | fixed bps | slippage ticks | orders | final equity | total cost |
+| --- | ---: | --- | --- | ---: | ---: | ---: | ---: | ---: |
+| `candidate_0001` | `1.0` | `0ms` | none | `0.0` | `0.0` | `45,288` | `-546.100` | `594.835` |
+| `candidate_0002` | `1.0` | `0ms` | none | `1.0` | `0.0` | `45,288` | `-1,719.671` | `1,768.406` |
+
+This sensitivity run reports all configured candidates and does not choose a
+final parameter. It is a framework check showing how account outcomes change
+under a predeclared cost stress, not a train-window hyperparameter selection.
+
 ## Known Limitations
 
 - NBBO quote-condition eligibility remains diagnostic-only.
@@ -301,3 +332,5 @@ inside a train window.
   cooldown, or risk controls.
 - Target-position accounting v1 does not implement train-window parameter
   optimization, latency modeling, passive execution, or official fee schedules.
+- Parameter sensitivity v1 reports candidates but does not select final
+  hyperparameters.
