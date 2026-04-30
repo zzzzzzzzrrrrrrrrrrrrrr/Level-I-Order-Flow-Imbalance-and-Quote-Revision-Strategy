@@ -160,6 +160,25 @@ Cost model v1 is a diagnostic cost layer, not a backtest.
 | SEC / FINRA fees | TBD | cost_rule | official fee schedules if used | required | unresolved |
 | exchange fee / rebate | TBD | cost_rule | venue-specific, not reliable without routing model | optional | unresolved |
 
+## Execution Accounting Assumptions
+
+Execution accounting v1 is an account-mechanics scaffold, not a research-grade
+backtest.
+
+| Parameter | Current value | Type | Source / rationale | Sensitivity required | Status |
+| --- | --- | --- | --- | --- | --- |
+| accounting policy | independent fixed-horizon round trips | research_design | simple account reconciliation before strategy backtest | required | implemented_scaffold |
+| signal source | `sequential_gate_signal` | research_design | current interpretable baseline signal | required | implemented |
+| quantity | `1` share | research_design | unit-size accounting check | required | implemented |
+| entry price proxy | signal midquote plus cost deduction | research_design | separates price move from cost deduction | required | implemented_scaffold |
+| exit price proxy | future midquote at label horizon | research_design | uses existing label horizon target | required | implemented_scaffold |
+| exit spread proxy | entry spread reused for exit half-spread | research_design | future spread not carried in signal rows | required | provisional |
+| fixed bps | `0.0` by default | cost_rule / stress_test | default base scenario; CLI parameter for stress | required | implemented |
+| slippage ticks | `0.0` by default | cost_rule / stress_test | default base scenario; CLI parameter for stress | required | implemented |
+| position limit | none | research_design | scaffold allows overlapping independent round trips | required | unresolved |
+| risk controls | not implemented | research_design | must be explicit before final backtest | required | unresolved |
+| parameter optimization | not implemented | research_design | avoid data-snooping before accounting is fixed | required | unresolved |
+
 ## Backtest Assumptions
 
 Backtest v1 is not implemented yet. Parameters must be registered before use:

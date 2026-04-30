@@ -15,7 +15,7 @@ Current implemented pipeline:
 ```text
 cleaning -> alignment -> quote features -> trade signing -> signed flow
 -> labels -> signals -> walk-forward evaluation -> threshold selection
--> cost diagnostics
+-> cost diagnostics -> execution accounting
 ```
 
 Status details live in:
@@ -26,4 +26,5 @@ Status details live in:
 - `assumptions/parameter_registry.md`
 
 Still separate and not final at this date: condition-code eligibility filters,
-execution-aware backtesting, position accounting, and risk controls.
+research-grade backtesting, position limits, risk controls, and parameter
+optimization.

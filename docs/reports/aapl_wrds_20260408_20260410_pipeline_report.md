@@ -31,14 +31,15 @@ Implemented stages:
 - walk-forward evaluation v1
 - threshold selection v1
 - cost model v1 diagnostics
+- execution accounting v1 scaffold
 
 Not implemented:
 
 - condition-code final eligibility filters
 - model fitting
-- execution-aware backtest
+- research-grade execution-aware backtest
 - broker / SEC / FINRA / exchange fee modeling
-- position accounting
+- position limits and risk controls
 
 ## Data Quality Summary
 
@@ -201,6 +202,42 @@ current naive signal configuration, not as a profitability test. The framework
 now has a cost-aware filter for signal specifications before any execution or
 PnL claims are made.
 
+## Execution Accounting Scaffold
+
+Policy:
+
+```text
+accounting_policy = independent_fixed_horizon_round_trip_accounting_v1
+entry_execution_policy = entry_at_signal_midquote_with_half_spread_cost
+exit_execution_policy = exit_at_future_midquote_with_entry_spread_proxy
+position_policy = independent_unit_round_trips_no_position_limit
+```
+
+Default scenario:
+
+```text
+quantity = 1 share
+fixed_bps = 0.0
+slippage_ticks = 0.0
+tick_size = 0.01
+```
+
+Accounting summary:
+
+| horizon | round trips | gross PnL | cost | net PnL | mean net per round trip | win rate | final position | max abs position |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `100ms` | `54,707` | `276.605` | `1,631.170` | `-1,354.565` | `-0.024760` | `0.0856` | `0.0` | `84.0` |
+| `500ms` | `54,647` | `263.655` | `1,628.600` | `-1,364.945` | `-0.024977` | `0.1185` | `0.0` | `84.0` |
+| `1s` | `54,599` | `304.150` | `1,627.310` | `-1,323.160` | `-0.024234` | `0.1557` | `0.0` | `123.0` |
+| `5s` | `54,508` | `282.540` | `1,624.650` | `-1,342.110` | `-0.024622` | `0.2716` | `0.0` | `153.0` |
+
+The scaffold reconciles cash, inventory, and final position for fixed-horizon
+round trips. The negative net PnL is consistent with the cost model diagnostic:
+gross signal-aligned price movement is positive, but not large enough to cover
+spread costs. The high max absolute position comes from the current independent
+round-trip policy and should not be interpreted as a risk-controlled strategy
+position.
+
 ## Known Limitations
 
 - NBBO quote-condition eligibility remains diagnostic-only.
@@ -208,4 +245,7 @@ PnL claims are made.
 - Quote size unit interpretation is not independently finalized.
 - Cost model v1 is diagnostic-only and excludes official broker, SEC, FINRA,
   exchange fee, rebate, and routing assumptions.
-- There is no execution-aware backtest or position accounting.
+- Execution accounting v1 is an account-mechanics scaffold only.
+- There is no research-grade execution-aware backtest.
+- Execution accounting v1 has no target-position logic, position limits,
+  cooldown, or risk controls.

@@ -184,3 +184,17 @@ and slippage-tick stress costs. It writes `*_cost_model_v1.csv` and
 `*_cost_model_v1_manifest.json`. Treat it as a cost-aware rejection diagnostic,
 not a profitability test. It does not simulate orders, position accounting,
 broker fees, exchange fees/rebates, SEC/FINRA fees, or risk controls.
+
+## Execution Accounting
+
+Run the account-mechanics scaffold for active signal rows:
+
+```powershell
+D:\python_library_envs\VHFT_lab\python.exe scripts\run_execution_accounting.py configs\data\aapl_wrds_20260408_20260410.yaml
+```
+
+Execution accounting v1 converts active signals into independent one-share
+fixed-horizon round trips and writes trade, ledger, summary, and manifest
+artifacts. It verifies cash, position, inventory, cost, and PnL arithmetic. It
+is not a complete backtest and does not implement risk controls, official fees,
+passive fills, order book queueing, or parameter optimization.
