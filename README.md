@@ -5,6 +5,7 @@ Execution-aware research scaffold for studying whether Level-I quote and trade i
 ## Repository layout
 
 - `AGENTS.md`: project operating rules and research constraints
+- `assumptions/`: centralized registry of project assumptions and parameters
 - `configs/`: data, experiment, backtest, and live-paper configs
 - `data/`: local raw, interim, processed, cache, and fixture data
 - `docs/`: design notes, decisions, reports, and references
@@ -21,7 +22,7 @@ Execution-aware research scaffold for studying whether Level-I quote and trade i
 - Data, outputs, local agent state, and notebook files are ignored by default in `.gitignore`.
 - Stage 1 schema, WRDS normalization, cleaning primitives, and raw WRDS extraction scaffolding are implemented with unit tests.
 - The current AAPL WRDS slice uses `taqmsec.nbbom_YYYYMMDD` as the main quote source, so normalized quotes represent national BBO state: `bid_exchange`, `ask_exchange`, `bid`, `ask`, `bid_size`, and `ask_size`. Trades use `taqmsec.ctm_YYYYMMDD`.
-- Cleaning v2, quote-trade alignment v1, quote feature v1, trade signing v1, signed-flow feature v1, labeling v1, signals v1, walk-forward evaluation v1, and threshold selection v1 are implemented as separate auditable steps. Condition-code eligibility, cost modeling, and backtests are still separate unfinished stages.
+- Cleaning v2, quote-trade alignment v1, quote feature v1, trade signing v1, signed-flow feature v1, labeling v1, signals v1, walk-forward evaluation v1, threshold selection v1, and the assumption registry are implemented as separate auditable artifacts. Condition-code eligibility, cost modeling, and backtests are still separate unfinished stages.
 
 ## WRDS extraction
 
