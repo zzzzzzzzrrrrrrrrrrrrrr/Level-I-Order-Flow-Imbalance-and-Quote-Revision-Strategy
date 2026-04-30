@@ -22,7 +22,7 @@ Execution-aware research scaffold for studying whether Level-I quote and trade i
 - Data, outputs, local agent state, and notebook files are ignored by default in `.gitignore`.
 - Stage 1 schema, WRDS normalization, cleaning primitives, and raw WRDS extraction scaffolding are implemented with unit tests.
 - The current AAPL WRDS slice uses `taqmsec.nbbom_YYYYMMDD` as the main quote source, so normalized quotes represent national BBO state: `bid_exchange`, `ask_exchange`, `bid`, `ask`, `bid_size`, and `ask_size`. Trades use `taqmsec.ctm_YYYYMMDD`.
-- Cleaning v2, quote-trade alignment v1, quote feature v1, trade signing v1, signed-flow feature v1, labeling v1, signals v1, walk-forward evaluation v1, threshold selection v1, cost model v1, and the assumption registry are implemented as separate auditable artifacts. Condition-code eligibility and backtests are still separate unfinished stages.
+- Cleaning v2, quote-trade alignment v1, quote feature v1, trade signing v1, signed-flow feature v1, labeling v1, signals v1, walk-forward evaluation v1, threshold selection v1, cost model v1, target-position accounting v1, TVT parameter selection v1, backtest v1, and the assumption registry are implemented as separate auditable artifacts. Condition-code eligibility, official fee modeling, and research-grade backtesting remain unfinished stages.
 
 ## WRDS extraction
 
@@ -238,3 +238,18 @@ TVT parameter selection v1 uses expanding train dates, selects parameters on the
 next validation date, and evaluates the frozen selected candidate on the next
 test date. In the current version, no predictive model is trained and no final
 hyperparameter claim is made.
+
+## Backtest
+
+Run backtest v1 for TVT-selected target-position accounting candidates:
+
+```powershell
+D:\python_library_envs\VHFT_lab\python.exe scripts\run_backtest.py configs\data\aapl_wrds_20260408_20260410.yaml
+```
+
+Backtest v1 reads `*_signals_v1.csv` and
+`*_tvt_parameter_selection_v1.csv`, evaluates only candidates marked
+`selected_for_test` on their held-out test dates, and writes orders, ledger,
+summary, and manifest artifacts. It does not reselect parameters on test data,
+train a predictive model, simulate passive fills, model explicit latency, or
+claim research-grade profitability.

@@ -14,8 +14,8 @@ quote source = WRDS TAQ NBBOM
 trade source = WRDS TAQ CTM
 ```
 
-This report records the local pipeline run through train-validation-test
-parameter selection v1. It is not a research-grade backtest report.
+This report records the local pipeline run through backtest v1. It is not a
+research-grade backtest report.
 
 ## Pipeline Status
 
@@ -35,12 +35,13 @@ Implemented stages:
 - target-position accounting v1 scaffold
 - parameter sensitivity v1
 - train-validation-test parameter selection v1
+- backtest v1
 
 Not implemented:
 
 - condition-code final eligibility filters
 - model fitting
-- research-grade execution-aware backtest
+- research-grade execution-aware backtest beyond the v1 accounting scaffold
 - broker / SEC / FINRA / exchange fee modeling
 - advanced position limits and risk controls
 - final hyperparameter selection claim
@@ -349,6 +350,34 @@ The selected candidate was chosen only on the validation date. The frozen
 candidate remained negative on the test date. This is a clean selection-flow
 check, not a final hyperparameter or profitability claim.
 
+## Backtest v1
+
+Policy:
+
+```text
+backtest_policy = tvt_selected_candidate_test_accounting_v1
+parameter_source_policy = frozen_candidate_selected_on_validation
+evaluation_policy = evaluate_selected_candidate_on_test_date_only
+split_source_policy = tvt_parameter_selection_v1
+test_used_for_selection = false
+parameter_reselection_on_test = false
+```
+
+Current held-out test evaluation:
+
+| fold | selected candidate | test date | orders | total cost | final equity |
+| --- | --- | --- | ---: | ---: | ---: |
+| `fold_001` | `candidate_0001` | `2026-04-10` | `13,846` | `157.785` | `-141.950` |
+
+Backtest v1 consumes the candidate selected by TVT parameter selection and
+reruns target-position accounting only on the held-out test date. It does not
+use the test date to choose parameters. The selected candidate remains negative
+on the test date, consistent with the earlier cost and target-position
+accounting diagnostics.
+
+This is a held-out accounting result under the current midquote-plus-cost
+execution proxy. It is not a research-grade profitability claim.
+
 ## Known Limitations
 
 - NBBO quote-condition eligibility remains diagnostic-only.
@@ -358,7 +387,7 @@ check, not a final hyperparameter or profitability claim.
   exchange fee, rebate, and routing assumptions.
 - Execution accounting v1 is an account-mechanics scaffold only.
 - Target-position accounting v1 is a bounded account-state scaffold only.
-- There is no research-grade execution-aware backtest.
+- Backtest v1 exists, but there is no research-grade execution-aware backtest.
 - Execution accounting v1 has no target-position logic, position limits,
   cooldown, or risk controls.
 - Target-position accounting v1 does not implement train-window parameter
@@ -367,3 +396,6 @@ check, not a final hyperparameter or profitability claim.
   hyperparameters.
 - TVT parameter selection v1 selects on validation and evaluates test once, but
   does not train a predictive model or make a final hyperparameter claim.
+- Backtest v1 consumes the TVT-selected candidate but does not model latency,
+  passive fills, queue priority, official fees, or broader out-of-sample
+  robustness.

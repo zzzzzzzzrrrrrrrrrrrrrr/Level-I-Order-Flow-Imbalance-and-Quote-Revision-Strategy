@@ -228,17 +228,19 @@ and evaluates frozen choices on test dates.
 
 ## Backtest Assumptions
 
-Backtest v1 is not implemented yet. Parameters must be registered before use:
+Backtest v1 evaluates frozen TVT-selected target-position accounting candidates
+on held-out test dates. It is not a research-grade profitability test.
 
 | Parameter | Current value | Type | Source / rationale | Sensitivity required | Status |
 | --- | --- | --- | --- | --- | --- |
-| execution price | TBD | research_design | bid/ask vs delayed quote must be explicit | required | unresolved |
-| latency | TBD | research_design | 0ms / 100ms / 500ms / 1s sensitivity expected | required | unresolved |
-| exit rule | TBD | research_design | fixed horizon vs reverse signal must be explicit | required | unresolved |
-| position size | TBD | research_design | one share / fixed notional / depth-based | required | unresolved |
-| spread filter | TBD | research_design | should be training-window selected or sensitivity-tested | required | unresolved |
-| cooldown | TBD | research_design | prevents overtrading | required | unresolved |
-| risk controls | TBD | research_design | max position, max trades, EOD flat | required | unresolved |
+| parameter source | TVT-selected candidate | methodology | validation-selected parameters frozen before test | not_applicable | implemented |
+| evaluation sample | selected fold test date only | methodology | prevents test data from selecting parameters | not_applicable | implemented |
+| accounting engine | target-position accounting v1 | research_design | bounded position account scaffold | required | implemented_scaffold |
+| execution price proxy | signal midquote with cost deduction | research_design | inherited from target-position accounting v1 | required | implemented_scaffold |
+| explicit latency | none | research_design | latency sensitivity still required | required | unresolved |
+| passive fills / queueing | not implemented | research_design | Level-I data cannot support queue simulation directly | required | unresolved |
+| official fee schedules | not implemented | cost_rule | broker / SEC / FINRA / exchange fees not modeled | required | unresolved |
+| research-grade backtest | false | research_design | broader samples and stronger execution model needed | not_applicable | implemented_status_flag |
 
 ## Items Requiring Official Verification
 

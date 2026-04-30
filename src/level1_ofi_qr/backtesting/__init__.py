@@ -16,6 +16,26 @@ from .costs import (
     CostModelResult,
     run_cost_model_v1,
 )
+from .backtest import (
+    BACKTEST_EVALUATION_POLICY,
+    BACKTEST_PARAMETER_SOURCE_POLICY,
+    BACKTEST_SPLIT_SOURCE_POLICY,
+    BACKTEST_V1_POLICY,
+    BACKTEST_V1_POLICY_NOTE,
+    BacktestV1Config,
+    BacktestV1Diagnostics,
+    BacktestV1Error,
+    BacktestV1Result,
+    run_backtest_v1,
+)
+from .backtest_workflow import (
+    BacktestV1BuildResult,
+    BacktestV1InputPaths,
+    BacktestV1OutputPaths,
+    BacktestV1WorkflowError,
+    build_backtest_v1,
+    find_backtest_v1_inputs,
+)
 from .workflow import (
     CostModelBuildResult,
     CostModelInputPaths,
@@ -28,6 +48,11 @@ from .workflow import (
 __all__ = [
     "COST_MODEL_POLICY",
     "COST_MODEL_POLICY_NOTE",
+    "BACKTEST_EVALUATION_POLICY",
+    "BACKTEST_PARAMETER_SOURCE_POLICY",
+    "BACKTEST_SPLIT_SOURCE_POLICY",
+    "BACKTEST_V1_POLICY",
+    "BACKTEST_V1_POLICY_NOTE",
     "DEFAULT_FIXED_BPS_GRID",
     "DEFAULT_SLIPPAGE_TICKS_GRID",
     "DEFAULT_TICK_SIZE",
@@ -35,6 +60,14 @@ __all__ = [
     "FIXED_BPS_POLICY",
     "ROUND_TRIP_COST_POLICY",
     "SLIPPAGE_TICKS_POLICY",
+    "BacktestV1BuildResult",
+    "BacktestV1Config",
+    "BacktestV1Diagnostics",
+    "BacktestV1Error",
+    "BacktestV1InputPaths",
+    "BacktestV1OutputPaths",
+    "BacktestV1Result",
+    "BacktestV1WorkflowError",
     "CostModelBuildResult",
     "CostModelConfig",
     "CostModelDiagnostics",
@@ -44,6 +77,9 @@ __all__ = [
     "CostModelResult",
     "CostModelWorkflowError",
     "build_cost_model_diagnostics",
+    "build_backtest_v1",
+    "find_backtest_v1_inputs",
     "find_cost_model_input",
+    "run_backtest_v1",
     "run_cost_model_v1",
 ]

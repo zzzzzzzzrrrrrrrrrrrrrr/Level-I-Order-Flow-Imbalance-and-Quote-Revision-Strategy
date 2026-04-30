@@ -16,7 +16,7 @@ Current implemented pipeline:
 cleaning -> alignment -> quote features -> trade signing -> signed flow
 -> labels -> signals -> walk-forward evaluation -> threshold selection
 -> cost diagnostics -> execution accounting -> target-position accounting
--> parameter sensitivity -> TVT parameter selection
+-> parameter sensitivity -> TVT parameter selection -> backtest v1
 ```
 
 Status details live in:
