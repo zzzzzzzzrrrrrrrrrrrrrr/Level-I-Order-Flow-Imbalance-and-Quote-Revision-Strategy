@@ -14,8 +14,8 @@ quote source = WRDS TAQ NBBOM
 trade source = WRDS TAQ CTM
 ```
 
-This report records the local pipeline run through cost model v1 diagnostics.
-It is not a backtest report.
+This report records the local pipeline run through target-position accounting
+v1 diagnostics. It is not a research-grade backtest report.
 
 ## Pipeline Status
 
@@ -32,6 +32,7 @@ Implemented stages:
 - threshold selection v1
 - cost model v1 diagnostics
 - execution accounting v1 scaffold
+- target-position accounting v1 scaffold
 
 Not implemented:
 
@@ -39,7 +40,8 @@ Not implemented:
 - model fitting
 - research-grade execution-aware backtest
 - broker / SEC / FINRA / exchange fee modeling
-- position limits and risk controls
+- advanced position limits and risk controls
+- train-window parameter optimization
 
 ## Data Quality Summary
 
@@ -238,6 +240,53 @@ spread costs. The high max absolute position comes from the current independent
 round-trip policy and should not be interpreted as a risk-controlled strategy
 position.
 
+## Target-Position Accounting Scaffold
+
+Policy:
+
+```text
+target_position_policy = signal_to_bounded_target_position_v1
+target_mapping_policy = long_short_flat_signal_to_target_position
+order_execution_policy = fill_at_signal_midquote_with_cost_deduction
+position_limit_policy = clip_target_to_max_abs_position
+```
+
+Default scenario:
+
+```text
+max_position = 1 share
+flat_on_no_signal = true
+eod_flat = true
+cooldown = 0ms
+max_trades_per_day = none
+fixed_bps = 0.0
+slippage_ticks = 0.0
+```
+
+Target-position result:
+
+| metric | value |
+| --- | ---: |
+| input signal rows | `1,648,869` |
+| active signal rows | `54,710` |
+| target-change candidates | `45,288` |
+| accepted orders | `45,288` |
+| skipped missing price rows | `0` |
+| skipped cooldown orders | `0` |
+| skipped max-trades orders | `0` |
+| total cost | `594.835` |
+| final equity | `-546.100` |
+| final position | `0.0` |
+| max abs position | `1.0` |
+| mean abs position | `0.500199` |
+| total turnover | `11,735,709.655` |
+
+This scaffold materially reduces the unrealistic exposure of independent
+round-trip accounting by enforcing a bounded target position. The result remains
+negative after spread costs. This is still not hyperparameter selection: no
+threshold, cooldown, spread filter, depth filter, or cost assumption was chosen
+inside a train window.
+
 ## Known Limitations
 
 - NBBO quote-condition eligibility remains diagnostic-only.
@@ -246,6 +295,9 @@ position.
 - Cost model v1 is diagnostic-only and excludes official broker, SEC, FINRA,
   exchange fee, rebate, and routing assumptions.
 - Execution accounting v1 is an account-mechanics scaffold only.
+- Target-position accounting v1 is a bounded account-state scaffold only.
 - There is no research-grade execution-aware backtest.
 - Execution accounting v1 has no target-position logic, position limits,
   cooldown, or risk controls.
+- Target-position accounting v1 does not implement train-window parameter
+  optimization, latency modeling, passive execution, or official fee schedules.

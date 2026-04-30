@@ -179,6 +179,23 @@ backtest.
 | risk controls | not implemented | research_design | must be explicit before final backtest | required | unresolved |
 | parameter optimization | not implemented | research_design | avoid data-snooping before accounting is fixed | required | unresolved |
 
+## Target-Position Accounting Assumptions
+
+Target-position accounting v1 is the first bounded account-state scaffold. It
+is not hyperparameter selection.
+
+| Parameter | Current value | Type | Source / rationale | Sensitivity required | Status |
+| --- | --- | --- | --- | --- | --- |
+| target mapping | `+1 -> long`, `-1 -> short`, `0 -> flat` | research_design | transparent signal-to-position baseline | required | implemented_scaffold |
+| max position | `1` share | research_design | bounded unit-size account state | required | implemented |
+| flat on no signal | `true` | research_design | avoid holding exposure without an active gate | required | implemented |
+| EOD flat | `true` | research_design | avoid overnight inventory in intraday scaffold | required | implemented |
+| cooldown | `0ms` | research_design | baseline no-delay control; CLI parameter for sensitivity | required | implemented |
+| max trades per day | none | research_design | optional control, not selected yet | required | implemented_optional |
+| fill proxy | signal midquote | research_design | accounting scaffold separates price state from cost deduction | required | implemented_scaffold |
+| cost deduction | half spread + fixed bps + slippage ticks | cost_rule / stress_test | aligned with cost model v1 | required | implemented |
+| parameter optimization | not implemented | research_design | must be train-window selected later | required | unresolved |
+
 ## Backtest Assumptions
 
 Backtest v1 is not implemented yet. Parameters must be registered before use:

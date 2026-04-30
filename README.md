@@ -198,3 +198,17 @@ fixed-horizon round trips and writes trade, ledger, summary, and manifest
 artifacts. It verifies cash, position, inventory, cost, and PnL arithmetic. It
 is not a complete backtest and does not implement risk controls, official fees,
 passive fills, order book queueing, or parameter optimization.
+
+## Target-Position Accounting
+
+Run bounded target-position accounting for signal rows:
+
+```powershell
+D:\python_library_envs\VHFT_lab\python.exe scripts\run_target_position_accounting.py configs\data\aapl_wrds_20260408_20260410.yaml
+```
+
+Target-position accounting v1 maps signals to bounded target positions, applies
+flat-on-no-signal, EOD flat, cooldown, and optional max-trades controls, and
+writes orders, ledger, summary, and manifest artifacts. It is the safer account
+state scaffold for later sensitivity tests, but it is not hyperparameter
+selection or a research-grade backtest.
