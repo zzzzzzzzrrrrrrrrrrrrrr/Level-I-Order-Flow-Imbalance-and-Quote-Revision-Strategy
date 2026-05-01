@@ -441,6 +441,10 @@ def _build_summary(
     target_change_candidate_rows: int,
 ) -> pd.DataFrame:
     if ledger.empty:
+        gross_pnl = 0.0
+        cost = 0.0
+        net_pnl = 0.0
+        num_trades = 0
         return pd.DataFrame(
             [
                 {
@@ -450,6 +454,14 @@ def _build_summary(
                     "target_change_candidate_rows": target_change_candidate_rows,
                     "order_rows": 0,
                     "total_cost": 0.0,
+                    "gross_pnl": gross_pnl,
+                    "cost": cost,
+                    "net_pnl": net_pnl,
+                    "num_trades": num_trades,
+                    "num_position_changes": 0,
+                    "gross_per_trade": None,
+                    "cost_per_trade": None,
+                    "net_per_trade": None,
                     "final_position": 0.0,
                     "final_cash": 0.0,
                     "final_equity": 0.0,
@@ -467,6 +479,10 @@ def _build_summary(
         )
     final = ledger.iloc[-1]
     turnover = (ledger["order_quantity"].abs() * ledger["fill_midquote"]).sum()
+    cost = float(ledger["event_cost"].sum())
+    net_pnl = float(final["equity_after"])
+    gross_pnl = net_pnl + cost
+    num_trades = len(ledger)
     return pd.DataFrame(
         [
             {
@@ -475,10 +491,18 @@ def _build_summary(
                 "active_signal_rows": int(rows["signal_numeric"].isin((1, -1)).sum()),
                 "target_change_candidate_rows": target_change_candidate_rows,
                 "order_rows": len(ledger),
-                "total_cost": float(ledger["event_cost"].sum()),
+                "total_cost": cost,
+                "gross_pnl": gross_pnl,
+                "cost": cost,
+                "net_pnl": net_pnl,
+                "num_trades": num_trades,
+                "num_position_changes": len(ledger),
+                "gross_per_trade": _safe_per_trade(gross_pnl, num_trades),
+                "cost_per_trade": _safe_per_trade(cost, num_trades),
+                "net_per_trade": _safe_per_trade(net_pnl, num_trades),
                 "final_position": float(final["position_after"]),
                 "final_cash": float(final["cash_after"]),
-                "final_equity": float(final["equity_after"]),
+                "final_equity": net_pnl,
                 "max_abs_position": float(ledger["position_after"].abs().max()),
                 "mean_abs_position": float(ledger["position_after"].abs().mean()),
                 "total_turnover": float(turnover),
@@ -491,6 +515,12 @@ def _build_summary(
             }
         ]
     )
+
+
+def _safe_per_trade(value: float, num_trades: int) -> float | None:
+    if num_trades == 0:
+        return None
+    return value / num_trades
 
 
 def _validate_inputs(

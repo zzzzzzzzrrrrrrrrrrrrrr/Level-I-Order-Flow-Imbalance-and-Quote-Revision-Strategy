@@ -24,7 +24,7 @@ def main() -> None:
     figures_root = Path(args.figures_dir)
     tables_root = Path(args.tables_dir)
 
-    specs = (
+    specs = [
         StrategyLedgerSpec(
             strategy_name="sequential_gate",
             ledger_path=processed_root / f"{config.slice_name}_backtest_v1_ledger.csv",
@@ -35,16 +35,26 @@ def main() -> None:
             ledger_path=processed_root / f"{config.slice_name}_model_backtest_v1_ledger.csv",
             summary_path=processed_root / f"{config.slice_name}_model_backtest_v1_summary.csv",
         ),
-    )
+    ]
+    cost_aware_ledger = processed_root / f"{config.slice_name}_cost_aware_linear_score_ledger.csv"
+    if cost_aware_ledger.exists():
+        specs.append(
+            StrategyLedgerSpec(
+                strategy_name="cost_aware_linear_score",
+                ledger_path=cost_aware_ledger,
+                summary_path=processed_root
+                / f"{config.slice_name}_cost_aware_linear_score_summary.csv",
+            )
+        )
     curve_csv_path = tables_root / f"{config.slice_name}_pnl_comparison_curve.csv"
     summary_csv_path = tables_root / f"{config.slice_name}_pnl_comparison_summary.csv"
     svg_path = figures_root / f"{config.slice_name}_pnl_comparison.svg"
     result = write_pnl_comparison(
-        specs,
+        tuple(specs),
         curve_csv_path=curve_csv_path,
         summary_csv_path=summary_csv_path,
         svg_path=svg_path,
-        title=f"{config.slice_name} PnL / Equity Curve Comparison",
+        title=f"{config.slice_name} Cumulative Net PnL After Costs",
     )
 
     print(f"curve_csv_path={curve_csv_path}")

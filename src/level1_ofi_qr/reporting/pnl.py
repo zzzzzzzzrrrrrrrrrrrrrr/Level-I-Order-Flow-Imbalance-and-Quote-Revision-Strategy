@@ -17,6 +17,12 @@ PNL_REPORTING_POLICY_NOTE: Final[str] = (
 )
 
 TIME_COLUMNS: Final[tuple[str, ...]] = ("event_time", "fill_time")
+SEGMENT_COLUMNS: Final[tuple[str, ...]] = (
+    "backtest_id",
+    "model_backtest_id",
+    "fold_id",
+    "simulation_id",
+)
 
 
 class PnLReportingError(ValueError):
@@ -183,8 +189,8 @@ def render_equity_svg(
             f'<rect x="0" y="0" width="{width}" height="{height}" fill="#ffffff" />',
             f'<text x="{margin_left}" y="36" class="title">{escape(title)}</text>',
             f'<text x="{margin_left}" y="58" class="subtitle">'
-            "Equity after each accounting event; values are dollars for one-share "
-            "target-position prototype.</text>",
+            "Cumulative net PnL after event_cost deductions; values are dollars "
+            "for the one-share target-position prototype.</text>",
             *grid_lines,
             f'<line x1="{margin_left}" y1="{margin_top}" x2="{margin_left}" '
             f'y2="{height - margin_bottom}" class="axis" />',
@@ -199,7 +205,7 @@ def render_equity_svg(
             f'text-anchor="end">{end_label}</text>',
             f'<text x="30" y="{margin_top + plot_height / 2:.2f}" class="axis-label" '
             'transform="rotate(-90 30 '
-            f'{margin_top + plot_height / 2:.2f})">Equity / cumulative net PnL</text>',
+            f'{margin_top + plot_height / 2:.2f})">Cumulative net PnL after costs</text>',
             "</svg>",
         ]
     )
@@ -222,12 +228,15 @@ def _read_ledger(spec: StrategyLedgerSpec) -> pd.DataFrame:
 def _ledger_to_curve(ledger: pd.DataFrame, *, strategy_name: str) -> pd.DataFrame:
     if ledger.empty:
         raise PnLReportingError(f"{strategy_name} ledger is empty.")
+    equity = _cumulative_net_equity(ledger)
     curve = pd.DataFrame(
         {
             "strategy": strategy_name,
             "event_time": ledger["event_time"],
             "event_number": range(1, len(ledger) + 1),
-            "equity_after": pd.to_numeric(ledger["equity_after"], errors="coerce"),
+            "equity_after": equity,
+            "local_equity_after": pd.to_numeric(ledger["equity_after"], errors="coerce"),
+            "pnl_measure": "cumulative_net_pnl_after_costs",
         }
     )
     start_row = pd.DataFrame(
@@ -236,6 +245,8 @@ def _ledger_to_curve(ledger: pd.DataFrame, *, strategy_name: str) -> pd.DataFram
             "event_time": [curve["event_time"].iloc[0]],
             "event_number": [0],
             "equity_after": [0.0],
+            "local_equity_after": [0.0],
+            "pnl_measure": ["cumulative_net_pnl_after_costs"],
         }
     )
     curve = pd.concat([start_row, curve], ignore_index=True)
@@ -254,21 +265,128 @@ def _summarize_curve(
     costs = pd.to_numeric(ledger["event_cost"], errors="coerce")
     positions = pd.to_numeric(ledger["position_after"], errors="coerce")
     final_equity = float(equity.iloc[-1])
+    summary = _read_optional_summary(spec)
     order_count = len(ledger)
+    cost = _summary_sum(summary, ("cost", "total_cost"), fallback=float(costs.sum()))
+    net_pnl = _summary_sum(summary, ("net_pnl", "final_equity"), fallback=final_equity)
+    gross_pnl = _summary_sum(summary, ("gross_pnl",), fallback=net_pnl + cost)
+    num_trades = int(
+        _summary_sum(summary, ("num_trades", "order_rows"), fallback=float(order_count))
+    )
+    num_position_changes = int(
+        _summary_sum(
+            summary,
+            ("num_position_changes", "order_rows"),
+            fallback=float(order_count),
+        )
+    )
     return {
         "strategy": spec.strategy_name,
         "ledger_path": str(spec.ledger_path),
         "summary_path": "" if spec.summary_path is None else str(spec.summary_path),
+        "pnl_measure": "cumulative_net_pnl_after_costs",
         "order_count": order_count,
         "final_equity": final_equity,
+        "gross_pnl": gross_pnl,
+        "cost": cost,
+        "net_pnl": net_pnl,
+        "num_trades": num_trades,
+        "num_position_changes": num_position_changes,
+        "gross_per_trade": _safe_ratio(gross_pnl, num_trades),
+        "cost_per_trade": _safe_ratio(cost, num_trades),
+        "net_per_trade": _safe_ratio(net_pnl, num_trades),
+        "selected_threshold_by_fold": _format_selected_by_fold(
+            summary,
+            ("selected_threshold", "score_threshold", "threshold_value"),
+        ),
+        "selected_cost_multiplier_by_fold": _format_selected_by_fold(
+            summary,
+            ("selected_cost_multiplier", "cost_multiplier"),
+        ),
         "min_equity": float(equity.min()),
         "max_equity": float(equity.max()),
         "max_drawdown": float(curve["drawdown"].max()),
-        "total_cost": float(costs.sum()),
+        "total_cost": cost,
         "final_position": float(positions.iloc[-1]),
         "mean_equity_per_event": float(equity.mean()),
         "final_equity_per_order": None if order_count == 0 else final_equity / order_count,
     }
+
+
+def _read_optional_summary(spec: StrategyLedgerSpec) -> pd.DataFrame | None:
+    if spec.summary_path is None or not spec.summary_path.exists():
+        return None
+    return pd.read_csv(spec.summary_path)
+
+
+def _summary_sum(
+    summary: pd.DataFrame | None,
+    columns: tuple[str, ...],
+    *,
+    fallback: float,
+) -> float:
+    if summary is None or summary.empty:
+        return fallback
+    column = _first_existing_column(summary, columns)
+    if column is None:
+        return fallback
+    return float(pd.to_numeric(summary[column], errors="coerce").fillna(0.0).sum())
+
+
+def _format_selected_by_fold(
+    summary: pd.DataFrame | None,
+    columns: tuple[str, ...],
+) -> str:
+    if summary is None or summary.empty:
+        return ""
+    value_column = _first_existing_column(summary, columns)
+    if value_column is None:
+        return ""
+    fold_column = "fold_id" if "fold_id" in summary.columns else None
+    parts = []
+    for index, row in summary.iterrows():
+        value = row[value_column]
+        if pd.isna(value):
+            continue
+        fold = str(row[fold_column]) if fold_column is not None else f"row_{index + 1:03d}"
+        parts.append(f"{fold}={value}")
+    return ";".join(parts)
+
+
+def _first_existing_column(frame: pd.DataFrame, columns: tuple[str, ...]) -> str | None:
+    for column in columns:
+        if column in frame.columns:
+            return column
+    return None
+
+
+def _safe_ratio(numerator: float, denominator: int) -> float | None:
+    if denominator == 0:
+        return None
+    return numerator / denominator
+
+
+def _cumulative_net_equity(ledger: pd.DataFrame) -> pd.Series:
+    local_equity = pd.to_numeric(ledger["equity_after"], errors="coerce")
+    segment_column = _segment_column(ledger)
+    if segment_column is None:
+        return local_equity.reset_index(drop=True)
+
+    result = pd.Series(index=ledger.index, dtype="float64")
+    offset = 0.0
+    for _, group in ledger.groupby(segment_column, sort=False):
+        group_equity = local_equity.loc[group.index]
+        result.loc[group.index] = group_equity + offset
+        if not group_equity.empty and not pd.isna(group_equity.iloc[-1]):
+            offset += float(group_equity.iloc[-1])
+    return result.reset_index(drop=True)
+
+
+def _segment_column(frame: pd.DataFrame) -> str | None:
+    for column in SEGMENT_COLUMNS:
+        if column in frame.columns and frame[column].nunique(dropna=False) > 1:
+            return column
+    return None
 
 
 def _time_column(frame: pd.DataFrame) -> str:
