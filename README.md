@@ -15,6 +15,8 @@ Execution-aware research scaffold for studying whether Level-I quote and trade i
 - `tests/`: fixtures plus unit, integration, and regression tests
 - `outputs/`: generated experiment, backtest, figure, table, and log artifacts
 
+Documentation starts at `docs/README.md`. For the current AAPL negative-result checkpoint, read `docs/reports/README.md` first.
+
 ## Current status
 
 - `AGENTS.md` remains the source of project rules.
