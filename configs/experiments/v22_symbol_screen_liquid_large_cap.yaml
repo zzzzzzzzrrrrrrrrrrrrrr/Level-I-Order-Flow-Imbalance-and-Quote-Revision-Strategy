@@ -1,0 +1,41 @@
+screen_name: v22_symbol_screen_liquid_large_cap
+diagnostic_version: symbol_screening_v22
+research_status: diagnostic_only
+
+universe:
+  name: liquid_large_cap_v22_screen
+  symbols:
+    - AAPL
+    - MSFT
+    - NVDA
+    - TSLA
+    - AMD
+    - AMZN
+    - META
+    - GOOGL
+    - NFLX
+    - SPY
+    - QQQ
+
+# AAPL is intentionally the only available processed slice right now.
+# Add one data-slice config per symbol after WRDS extraction and the v1/v2
+# pipeline artifacts exist for that symbol. Do not overwrite the AAPL config;
+# it is the reproducible negative benchmark.
+data_slices:
+  - symbol: AAPL
+    config: configs/data/aapl_wrds_20260313_20260410.yaml
+
+screening:
+  validation_min_dates: 2
+  horizons:
+    - 1s
+    - 5s
+    - 10s
+    - 30s
+    - 60s
+  decile_horizons:
+    - 1s
+    - 5s
+  pass_move_over_cost: 1.0
+  strong_pass_move_over_cost: 1.5
+  fail_move_over_cost: 0.5
