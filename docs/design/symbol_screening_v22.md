@@ -38,14 +38,16 @@ Optional:
 
 ## Outputs
 
-V2.2 writes only diagnostic result tables and figures:
+V2.2 writes only diagnostic result tables and figures. Experiment-config runs default to an experiment-scoped folder:
 
-- `outputs/tables/v22_symbol_screen_summary.csv`
-- `outputs/tables/v22_symbol_screen_deciles.csv`
-- `outputs/tables/v22_symbol_screen_horizon_sweep.csv`
-- `outputs/tables/v22_symbol_screen_manifest.json`
-- `outputs/figures/v22_symbol_screen_move_over_cost.svg`
-- `outputs/figures/v22_symbol_screen_decile_markout.svg`
+- `outputs/experiments/<screen_name>/config.yaml`
+- `outputs/experiments/<screen_name>/notes.md`
+- `outputs/experiments/<screen_name>/tables/v22_symbol_screen_summary.csv`
+- `outputs/experiments/<screen_name>/tables/v22_symbol_screen_deciles.csv`
+- `outputs/experiments/<screen_name>/tables/v22_symbol_screen_horizon_sweep.csv`
+- `outputs/experiments/<screen_name>/tables/v22_symbol_screen_manifest.json`
+- `outputs/experiments/<screen_name>/figures/v22_symbol_screen_move_over_cost.svg`
+- `outputs/experiments/<screen_name>/figures/v22_symbol_screen_decile_markout.svg`
 
 These outputs include explicit `universe_name`, `symbol`, `split`, `horizon`, and `signal_bucket` columns where applicable.
 

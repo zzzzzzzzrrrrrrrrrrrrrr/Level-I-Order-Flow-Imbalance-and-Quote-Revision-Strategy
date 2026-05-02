@@ -32,6 +32,12 @@ v2.2 unfilled_1s_markout_bps = 0.3115
 v2.2 validation_pass_flag = false
 ```
 
+Current v2.2 experiment artifacts:
+
+```text
+outputs/experiments/v22_symbol_screen_liquid_large_cap/
+```
+
 Interpretation:
 
 ```text

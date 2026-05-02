@@ -20,12 +20,14 @@ The workflow did not change core data schemas. It read existing v2.1 candidate e
 
 ## Outputs
 
-- `outputs/tables/v22_symbol_screen_summary.csv`
-- `outputs/tables/v22_symbol_screen_deciles.csv`
-- `outputs/tables/v22_symbol_screen_horizon_sweep.csv`
-- `outputs/tables/v22_symbol_screen_manifest.json`
-- `outputs/figures/v22_symbol_screen_move_over_cost.svg`
-- `outputs/figures/v22_symbol_screen_decile_markout.svg`
+- `outputs/experiments/v22_symbol_screen_liquid_large_cap/config.yaml`
+- `outputs/experiments/v22_symbol_screen_liquid_large_cap/notes.md`
+- `outputs/experiments/v22_symbol_screen_liquid_large_cap/tables/v22_symbol_screen_summary.csv`
+- `outputs/experiments/v22_symbol_screen_liquid_large_cap/tables/v22_symbol_screen_deciles.csv`
+- `outputs/experiments/v22_symbol_screen_liquid_large_cap/tables/v22_symbol_screen_horizon_sweep.csv`
+- `outputs/experiments/v22_symbol_screen_liquid_large_cap/tables/v22_symbol_screen_manifest.json`
+- `outputs/experiments/v22_symbol_screen_liquid_large_cap/figures/v22_symbol_screen_move_over_cost.svg`
+- `outputs/experiments/v22_symbol_screen_liquid_large_cap/figures/v22_symbol_screen_decile_markout.svg`
 
 ## AAPL Summary
 
