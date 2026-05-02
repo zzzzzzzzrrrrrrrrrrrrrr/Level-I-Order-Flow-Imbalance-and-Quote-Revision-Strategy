@@ -8,7 +8,8 @@ from pathlib import Path
 
 import pandas as pd
 
-from ..schema import EVENT_TIME
+from ..alignment import TRADING_DATE
+from ..schema import EVENT_TIME, SYMBOL
 from ..utils import DataSliceConfig
 from .walk_forward import (
     WALK_FORWARD_POLICY_NOTE,
@@ -73,7 +74,7 @@ def build_walk_forward_evaluation(
     """Build walk-forward statistical evaluation from signal v1 rows."""
 
     inputs = find_walk_forward_input(config, processed_dir=processed_dir)
-    signal_rows = _read_signal_csv(inputs.signal_path)
+    signal_rows = _read_signal_csv(inputs.signal_path, config=evaluation_config)
     evaluation = evaluate_signals_walk_forward_v1(signal_rows, config=evaluation_config)
     paths = _write_walk_forward_outputs(
         config,
@@ -89,8 +90,18 @@ def build_walk_forward_evaluation(
     )
 
 
-def _read_signal_csv(path: Path) -> pd.DataFrame:
-    frame = pd.read_csv(path)
+def _read_signal_csv(path: Path, *, config: WalkForwardConfig) -> pd.DataFrame:
+    usecols = [EVENT_TIME, SYMBOL, TRADING_DATE, config.signal_column]
+    for horizon in config.horizons:
+        suffix = horizon.lower().replace(" ", "").replace(".", "p")
+        usecols.extend(
+            [
+                f"label_available_{suffix}",
+                f"future_midquote_direction_{suffix}",
+                f"future_midquote_return_bps_{suffix}",
+            ]
+        )
+    frame = pd.read_csv(path, usecols=tuple(dict.fromkeys(usecols)))
     frame[EVENT_TIME] = pd.to_datetime(frame[EVENT_TIME], format="mixed")
     return frame
 

@@ -94,20 +94,20 @@ select the final tolerance.
 
 ## Current AAPL Slice
 
-For `aapl_wrds_20260408_20260410`, alignment v1 currently produces:
+For `aapl_wrds_20260313_20260410`, alignment v1 currently produces:
 
-- input quote rows: `2,029,892`
-- input trade rows: `1,648,869`
-- aligned trade rows: `1,648,869`
-- matched trade rows: `1,648,788`
-- unmatched trade rows: `81`
+- input quote rows: `21,287,434`
+- input trade rows: `12,141,453`
+- aligned trade rows: `12,141,453`
+- matched trade rows: `12,141,282`
+- unmatched trade rows: `171`
 - min quote lag: `0.001 ms`
-- median quote lag: `17.971 ms`
-- p95 quote lag: `612.05165 ms`
-- p99 quote lag: `1348.36265 ms`
+- median quote lag: `8.261 ms`
+- p95 quote lag: `372.333 ms`
+- p99 quote lag: `863.18619 ms`
 - max quote lag: `9311.365 ms`
-- matched locked quote count: `6,778`
-- matched locked quote ratio: `0.0041109`
+- matched locked quote count: `58,004`
+- matched locked quote ratio: `0.0047774`
 - cross-session match count: `0`
 
 This is not a research-grade signed sample yet. Trade signing and final

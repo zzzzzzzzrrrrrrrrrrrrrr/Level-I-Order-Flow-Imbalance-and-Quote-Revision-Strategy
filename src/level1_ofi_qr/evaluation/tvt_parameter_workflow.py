@@ -8,7 +8,9 @@ from pathlib import Path
 
 import pandas as pd
 
-from ..schema import EVENT_TIME
+from ..alignment import TRADING_DATE
+from ..schema import EVENT_TIME, SYMBOL
+from ..signals.rules import SIGNAL_MIDQUOTE, SIGNAL_QUOTED_SPREAD
 from ..utils import DataSliceConfig
 from .tvt_parameter_selection import (
     TVT_SELECTION_POLICY_NOTE,
@@ -73,7 +75,7 @@ def build_tvt_parameter_selection(
     """Run TVT parameter selection v1 from signal rows."""
 
     inputs = find_tvt_parameter_selection_input(config, processed_dir=processed_dir)
-    signal_rows = _read_signal_csv(inputs.signal_path)
+    signal_rows = _read_signal_csv(inputs.signal_path, config=selection_config)
     result = run_tvt_parameter_selection_v1(signal_rows, config=selection_config)
     paths = _write_tvt_parameter_selection_outputs(
         config,
@@ -89,8 +91,16 @@ def build_tvt_parameter_selection(
     )
 
 
-def _read_signal_csv(path: Path) -> pd.DataFrame:
-    frame = pd.read_csv(path)
+def _read_signal_csv(path: Path, *, config: TVTParameterSelectionConfig) -> pd.DataFrame:
+    usecols = [
+        EVENT_TIME,
+        SYMBOL,
+        TRADING_DATE,
+        config.signal_column,
+        SIGNAL_MIDQUOTE,
+        SIGNAL_QUOTED_SPREAD,
+    ]
+    frame = pd.read_csv(path, usecols=tuple(dict.fromkeys(usecols)))
     frame[EVENT_TIME] = pd.to_datetime(frame[EVENT_TIME], format="mixed")
     return frame
 

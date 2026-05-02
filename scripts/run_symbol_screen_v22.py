@@ -50,6 +50,7 @@ def main() -> None:
         data_configs = tuple(
             load_data_slice_config(item["config"]) for item in raw_config["data_slices"]
         )
+        date_window = _date_window_metadata(raw_config)
         result = build_symbol_screen_v22_for_data_configs(
             data_configs,
             processed_dir=args.processed_dir,
@@ -57,6 +58,13 @@ def main() -> None:
             figures_dir=figures_dir,
             screening_config=SymbolScreenV22Config(
                 universe_name=universe_name,
+                date_window_name=date_window["name"],
+                date_window_start=date_window["start"],
+                date_window_end=date_window["end"],
+                date_window_purpose=date_window["purpose"],
+                expected_trading_dates=date_window["trading_dates"],
+                session_filter=date_window["session"],
+                symbol_metadata=_symbol_metadata_from_groups(raw_config),
                 horizons=_grid_from_args_or_config(
                     args.horizons,
                     screening,
@@ -72,6 +80,11 @@ def main() -> None:
                 validation_min_dates=args.validation_min_dates
                 if args.validation_min_dates is not None
                 else int(screening.get("validation_min_dates", 2)),
+                pass_move_over_cost=float(screening.get("pass_move_over_cost", 1.0)),
+                strong_pass_move_over_cost=float(
+                    screening.get("strong_pass_move_over_cost", 1.5)
+                ),
+                fail_move_over_cost=float(screening.get("fail_move_over_cost", 0.5)),
                 candidate_source=args.candidate_source,
             ),
         )
@@ -160,6 +173,47 @@ def _load_raw_yaml(path: str) -> dict[str, object]:
     return loaded
 
 
+def _date_window_metadata(raw_config: dict[str, object]) -> dict[str, object]:
+    raw = raw_config.get("date_window", {})
+    if not isinstance(raw, dict):
+        raw = {}
+    trading_dates = raw.get("trading_dates", ())
+    if isinstance(trading_dates, str):
+        parsed_dates = _parse_grid(trading_dates)
+    else:
+        parsed_dates = tuple(str(value) for value in trading_dates)
+    return {
+        "name": raw.get("name"),
+        "start": str(raw.get("start")) if raw.get("start") is not None else None,
+        "end": str(raw.get("end")) if raw.get("end") is not None else None,
+        "purpose": raw.get("purpose"),
+        "session": raw.get("session"),
+        "trading_dates": parsed_dates,
+    }
+
+
+def _symbol_metadata_from_groups(raw_config: dict[str, object]) -> dict[str, dict[str, str]]:
+    universe = raw_config.get("universe", {})
+    if not isinstance(universe, dict):
+        return {}
+    groups = universe.get("groups", {})
+    if not isinstance(groups, dict):
+        return {}
+    metadata: dict[str, dict[str, str]] = {}
+    for group_id, raw_group in groups.items():
+        if not isinstance(raw_group, dict):
+            continue
+        symbols = raw_group.get("symbols", ())
+        for symbol in symbols:
+            metadata[str(symbol)] = {
+                "group_id": str(group_id),
+                "group_label": str(raw_group.get("group_label", "")),
+                "research_role": str(raw_group.get("research_role", "")),
+                "hypothesis": str(raw_group.get("hypothesis", "")),
+            }
+    return metadata
+
+
 def _experiment_root(raw: str | None, *, screen_name: str) -> Path:
     if raw:
         return Path(raw)
@@ -182,11 +236,29 @@ def _write_experiment_metadata(
         "This directory contains one experiment-scoped v2.2 symbol screening run.",
         "Symbol-level pipeline artifacts remain under `data/processed/<slice_name>/`.",
         "Cross-symbol comparison artifacts live here under `tables/` and `figures/`.",
+        "Group metadata is used only for reporting and aggregation; it does not alter signals, labels, thresholds, horizons, or cost accounting.",
         "",
     ]
+    date_window = raw_config.get("date_window")
+    if isinstance(date_window, dict):
+        notes.append(f"Date window: `{date_window.get('name', 'configured_date_window')}`")
+        notes.append(
+            f"Window bounds: `{date_window.get('start')}` to `{date_window.get('end')}`"
+        )
+        notes.append("")
     universe = raw_config.get("universe")
     if isinstance(universe, dict):
         notes.append(f"Universe name: `{universe.get('name', 'configured_universe')}`")
+        groups = universe.get("groups")
+        if isinstance(groups, dict):
+            notes.append("")
+            notes.append("Configured liquidity-regime groups:")
+            for group_id, group in groups.items():
+                if isinstance(group, dict):
+                    label = group.get("group_label", group_id)
+                    role = group.get("research_role", "")
+                    symbols = ", ".join(str(symbol) for symbol in group.get("symbols", ()))
+                    notes.append(f"- `{group_id}` ({label}): {role}; symbols: {symbols}")
         symbols = universe.get("symbols", [])
         if symbols:
             notes.append("")

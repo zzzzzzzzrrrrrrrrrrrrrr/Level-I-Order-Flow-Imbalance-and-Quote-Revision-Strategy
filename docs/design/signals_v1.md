@@ -83,18 +83,18 @@ labels_used_for_signal = false
 
 ## Current AAPL Slice
 
-For `aapl_wrds_20260408_20260410`, signals v1 currently produces:
+For `aapl_wrds_20260313_20260410`, signals v1 currently produces:
 
-- input feature rows: `1,648,869`
-- input quote rows: `2,029,892`
-- output signal rows: `1,648,869`
+- input feature rows: `12,141,453`
+- input quote rows: `21,287,434`
+- output signal rows: `12,141,453`
 - signed-flow column: `signed_flow_imbalance_500ms`
 - thresholds: `0.0` for QI, signed-flow, and QR bps
-- signal input available rows: `1,648,777`
-- signal input missing rows: `92`
-- long signal rows: `25,080`
-- short signal rows: `29,630`
-- no-trade rows: `1,594,159`
+- signal input available rows: `12,141,208`
+- signal input missing rows: `245`
+- long signal rows: `177,014`
+- short signal rows: `195,895`
+- no-trade rows: `11,768,544`
 
 These counts use diagnostic sign-agreement thresholds. They should not be
 presented as optimized or validated trading rules.

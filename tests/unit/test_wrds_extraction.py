@@ -27,7 +27,7 @@ CONFIG_PATH = (
     Path(__file__).resolve().parents[2]
     / "configs"
     / "data"
-    / "aapl_wrds_20260408_20260410.yaml"
+    / "aapl_wrds_20260313_20260410.yaml"
 )
 
 
@@ -148,14 +148,14 @@ def test_build_wrds_query_specs_creates_quote_and_trade_queries() -> None:
 
     query_specs = build_wrds_query_specs(config, limit_per_query=10)
 
-    assert len(query_specs) == 6
+    assert len(query_specs) == 40
     assert query_specs[0].kind == "quotes"
-    assert query_specs[0].table_identifier == "taqmsec.nbbom_20260408"
+    assert query_specs[0].table_identifier == "taqmsec.nbbom_20260313"
     assert "time_m >= '09:30:00'" in query_specs[0].sql
     assert "time_m <= '16:00:00'" in query_specs[0].sql
     assert "limit 10" in query_specs[0].sql
     assert query_specs[1].kind == "trades"
-    assert query_specs[1].table_identifier == "taqmsec.ctm_20260408"
+    assert query_specs[1].table_identifier == "taqmsec.ctm_20260313"
 
 
 def test_extract_wrds_raw_data_uses_fake_connection_and_collects_diagnostics() -> None:
@@ -164,14 +164,14 @@ def test_extract_wrds_raw_data_uses_fake_connection_and_collects_diagnostics() -
 
     result = extract_wrds_raw_data(config, connection=connection)
 
-    assert len(connection.sql_calls) == 6
-    assert len(result.quotes) == 3
-    assert len(result.trades) == 3
+    assert len(connection.sql_calls) == 40
+    assert len(result.quotes) == 20
+    assert len(result.trades) == 20
     assert "best_bid" in result.quotes.columns
     assert "price" in result.trades.columns
-    assert result.diagnostics.quote_rows == 3
-    assert result.diagnostics.trade_rows == 3
-    assert len(result.diagnostics.queries) == 6
+    assert result.diagnostics.quote_rows == 20
+    assert result.diagnostics.trade_rows == 20
+    assert len(result.diagnostics.queries) == 40
 
 
 def test_list_available_wrds_daily_tables_filters_prefixes() -> None:
@@ -197,7 +197,10 @@ def test_validate_wrds_query_tables_exist_reports_missing_tables() -> None:
 
     missing_tables = find_missing_wrds_tables(connection, query_specs)
 
-    assert missing_tables == ("taqmsec.nbbom_20260409", "taqmsec.nbbom_20260410")
+    assert len(missing_tables) == 19
+    assert "taqmsec.nbbom_20260313" in missing_tables
+    assert "taqmsec.nbbom_20260408" not in missing_tables
+    assert "taqmsec.nbbom_20260410" in missing_tables
     with pytest.raises(WrdsExtractionError, match="not available"):
         validate_wrds_query_tables_exist(connection, query_specs)
 
@@ -218,6 +221,6 @@ def test_validate_wrds_query_columns_exist_reports_missing_columns() -> None:
 
     missing_columns = find_missing_wrds_query_columns(connection, (bad_query_spec,))
 
-    assert missing_columns == {"taqmsec.nbbom_20260408": ("bidex",)}
+    assert missing_columns == {"taqmsec.nbbom_20260313": ("bidex",)}
     with pytest.raises(WrdsExtractionError, match="column"):
         validate_wrds_query_columns_exist(connection, (bad_query_spec,))

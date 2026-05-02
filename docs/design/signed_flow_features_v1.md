@@ -96,14 +96,14 @@ If trailing trade volume is zero, the imbalance is null instead of infinite.
 
 ## Current AAPL Slice
 
-For `aapl_wrds_20260408_20260410`, signed-flow feature v1 currently produces:
+For `aapl_wrds_20260313_20260410`, signed-flow feature v1 currently produces:
 
-- input signed trade rows: `1,648,869`
-- output feature rows: `1,648,869`
-- signed trade rows: `1,648,867`
-- unknown sign rows: `2`
-- buy sign rows: `950,756`
-- sell sign rows: `698,111`
+- input signed trade rows: `12,141,453`
+- output feature rows: `12,141,453`
+- signed trade rows: `12,141,422`
+- unknown sign rows: `31`
+- buy sign rows: `6,823,163`
+- sell sign rows: `5,318,259`
 - trade-count windows: `10`, `50`, `100`
 - clock-time windows: `100ms`, `500ms`, `1s`
 - window inclusion policy: `trailing_windows_include_current_trade`

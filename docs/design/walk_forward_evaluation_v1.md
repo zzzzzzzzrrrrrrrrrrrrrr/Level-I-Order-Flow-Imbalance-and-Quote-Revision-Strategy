@@ -74,11 +74,11 @@ It is a statistical directional-alignment measure, not PnL.
 
 ## Current AAPL Slice
 
-For `aapl_wrds_20260408_20260410`, walk-forward evaluation v1 currently uses:
+For `aapl_wrds_20260313_20260410`, walk-forward evaluation v1 currently uses:
 
-- input signal rows: `1,648,869`
-- trading dates: `2026-04-08`, `2026-04-09`, `2026-04-10`
-- fold count: `2`
+- input signal rows: `12,141,453`
+- trading dates: 20 dates from `2026-03-13` through `2026-04-10`, excluding `2026-04-03`
+- fold count: `19`
 - horizons: `100ms`, `500ms`, `1s`, `5s`
 - signal column: `sequential_gate_signal`
 
@@ -86,10 +86,10 @@ Aggregate evaluation-fold results:
 
 | horizon | evaluated signal rows | signal accuracy | mean signal-aligned return bps |
 | --- | ---: | ---: | ---: |
-| `100ms` | `33,674` | `0.4771` | `0.1917` |
-| `500ms` | `33,651` | `0.4862` | `0.1657` |
-| `1s` | `33,627` | `0.4967` | `0.2166` |
-| `5s` | `33,575` | `0.5114` | `0.1204` |
+| `100ms` | `347,610` | `0.4709` | `0.2169` |
+| `500ms` | `347,362` | `0.4886` | `0.2195` |
+| `1s` | `347,199` | `0.4979` | `0.2655` |
+| `5s` | `346,251` | `0.5084` | `0.3840` |
 
 These are statistical direction-alignment diagnostics only. They should not be
 presented as tradable PnL or a cost-adjusted result.

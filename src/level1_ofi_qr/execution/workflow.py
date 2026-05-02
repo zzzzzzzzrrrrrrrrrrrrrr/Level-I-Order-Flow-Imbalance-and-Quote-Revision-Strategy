@@ -8,7 +8,8 @@ from pathlib import Path
 
 import pandas as pd
 
-from ..schema import EVENT_TIME
+from ..alignment import TRADING_DATE
+from ..schema import EVENT_TIME, SYMBOL
 from ..utils import DataSliceConfig
 from .accounting import (
     EXECUTION_ACCOUNTING_POLICY_NOTE,
@@ -77,7 +78,7 @@ def build_execution_accounting(
     """Run execution accounting v1 from signal rows."""
 
     inputs = find_execution_accounting_input(config, processed_dir=processed_dir)
-    signal_rows = _read_signal_csv(inputs.signal_path)
+    signal_rows = _read_signal_csv(inputs.signal_path, config=accounting_config)
     result = run_execution_accounting_v1(signal_rows, config=accounting_config)
     paths = _write_execution_accounting_outputs(
         config,
@@ -97,8 +98,25 @@ def build_execution_accounting(
     )
 
 
-def _read_signal_csv(path: Path) -> pd.DataFrame:
-    frame = pd.read_csv(path)
+def _read_signal_csv(path: Path, *, config: ExecutionAccountingConfig) -> pd.DataFrame:
+    usecols = [
+        EVENT_TIME,
+        SYMBOL,
+        TRADING_DATE,
+        config.signal_column,
+        config.midquote_column,
+        config.spread_column,
+    ]
+    for horizon in config.horizons:
+        suffix = horizon.lower().replace(" ", "").replace(".", "p")
+        usecols.extend(
+            [
+                f"label_available_{suffix}",
+                f"future_midquote_{suffix}",
+                f"future_midquote_event_time_{suffix}",
+            ]
+        )
+    frame = pd.read_csv(path, usecols=tuple(dict.fromkeys(usecols)), low_memory=False)
     frame[EVENT_TIME] = pd.to_datetime(frame[EVENT_TIME], format="mixed")
     return frame
 

@@ -9,16 +9,33 @@ CONFIG_PATH = (
     Path(__file__).resolve().parents[2]
     / "configs"
     / "data"
-    / "aapl_wrds_20260408_20260410.yaml"
+    / "aapl_wrds_20260313_20260410.yaml"
 )
 
 
 def test_load_data_slice_config_parses_wrds_slice() -> None:
     config = load_data_slice_config(CONFIG_PATH)
 
-    assert config.slice_name == "aapl_wrds_20260408_20260410"
+    assert config.slice_name == "aapl_wrds_20260313_20260410"
     assert config.symbols == ("AAPL",)
     assert config.time_range.trading_dates == (
+        date(2026, 3, 13),
+        date(2026, 3, 16),
+        date(2026, 3, 17),
+        date(2026, 3, 18),
+        date(2026, 3, 19),
+        date(2026, 3, 20),
+        date(2026, 3, 23),
+        date(2026, 3, 24),
+        date(2026, 3, 25),
+        date(2026, 3, 26),
+        date(2026, 3, 27),
+        date(2026, 3, 30),
+        date(2026, 3, 31),
+        date(2026, 4, 1),
+        date(2026, 4, 2),
+        date(2026, 4, 6),
+        date(2026, 4, 7),
         date(2026, 4, 8),
         date(2026, 4, 9),
         date(2026, 4, 10),

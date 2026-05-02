@@ -6,6 +6,7 @@ Reports are empirical artifacts. They record what was run, what assumptions were
 
 | Report | Status | What It Answers |
 | --- | --- | --- |
+| `symbol_screening_v22_phase1_by_liquidity_regime_same_20d.md` | Configured pending data extraction | How will the phase-1 same-window liquidity-regime screen be run and audited? |
 | `symbol_screening_v22_2026-05-01.md` | Current conclusion | Does AAPL pass validation-only move/cost and adverse-selection screening? No. |
 | `microstructure_v21_diagnostic_2026-05-01.md` | Current execution diagnostic | Does passive/hybrid focused execution rescue AAPL? No under the tested variant. |
 | `microstructure_v2_diagnostic_2026-05-01.md` | Prior diagnostic | Why did cost-aware selection reduce losses but not create stable tradable alpha? |
@@ -37,6 +38,17 @@ Current v2.2 experiment artifacts:
 ```text
 outputs/experiments/v22_symbol_screen_liquid_large_cap/
 ```
+
+Phase-1 liquidity-regime diagnostic scaffold:
+
+```text
+configs/experiments/v22_symbol_screen_phase1_by_liquidity_regime_same_20d.yaml
+outputs/experiments/v22_symbol_screen_phase1_by_liquidity_regime_same_20d/
+```
+
+The phase-1 scaffold keeps AAPL as the known negative control and treats groups
+as ex-ante liquidity-regime hypotheses. Group metadata is reporting-only and
+must not change signals, labels, thresholds, horizons, or costs.
 
 Interpretation:
 

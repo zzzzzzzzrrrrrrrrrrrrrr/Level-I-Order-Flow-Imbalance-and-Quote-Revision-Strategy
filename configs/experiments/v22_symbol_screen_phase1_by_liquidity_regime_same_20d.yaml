@@ -1,0 +1,106 @@
+screen_name: v22_symbol_screen_phase1_by_liquidity_regime_same_20d
+diagnostic_version: symbol_screening_v22
+research_status: diagnostic_only
+
+date_window:
+  name: same_20_trading_day_window
+  start: 2026-03-13
+  end: 2026-04-10
+  session: regular_market_hours
+  purpose: control_date_and_market_regime_effects
+  trading_dates:
+    - 2026-03-13
+    - 2026-03-16
+    - 2026-03-17
+    - 2026-03-18
+    - 2026-03-19
+    - 2026-03-20
+    - 2026-03-23
+    - 2026-03-24
+    - 2026-03-25
+    - 2026-03-26
+    - 2026-03-27
+    - 2026-03-30
+    - 2026-03-31
+    - 2026-04-01
+    - 2026-04-02
+    - 2026-04-06
+    - 2026-04-07
+    - 2026-04-08
+    - 2026-04-09
+    - 2026-04-10
+
+universe:
+  name: phase1_liquidity_regime_screen
+  description: Cross-symbol diagnostic grouped by ex-ante liquidity-regime hypotheses.
+  wrds_symbol_filter: "sym_root in ('AAPL', 'MSFT', 'NVDA', 'AMZN', 'META', 'AMD', 'BAC', 'C', 'F', 'XOM', 'JPM', 'WMT') and (sym_suffix is null or sym_suffix = '')"
+  groups:
+    group_A_ultra_liquid_mega_cap_control:
+      group_label: "Group A"
+      research_role: ultra-liquid mega-cap control
+      hypothesis: >
+        Ultra-liquid mega-cap names may have observable Level-I pressure
+        but thin edge after costs because competition, depth, and spread efficiency
+        compress short-horizon markouts.
+      symbols:
+        - AAPL
+        - MSFT
+        - NVDA
+        - AMZN
+        - META
+
+    group_B_high_turnover_tick_sensitive_candidates:
+      group_label: "Group B"
+      research_role: high-turnover tick/spread-structure candidates
+      hypothesis: >
+        High-turnover names with different price level, tick-size binding,
+        spread-bps, and depth structure may have a different edge/cost ratio
+        from ultra-liquid mega-cap controls.
+      symbols:
+        - AMD
+        - BAC
+        - C
+        - F
+
+    group_C_non_tech_large_cap_liquidity_controls:
+      group_label: "Group C"
+      research_role: non-tech large-cap liquidity controls
+      hypothesis: >
+        Non-tech large-cap names test whether the observed Level-I diagnostics
+        are specific to technology/mega-cap trading structure or persist across sectors.
+      symbols:
+        - XOM
+        - JPM
+        - WMT
+
+# AAPL is the only processed slice currently available and remains the known
+# negative-control benchmark. Add one data-slice config per remaining symbol
+# only after WRDS extraction and the v1/v2 pipeline artifacts exist for that
+# symbol. Do not overwrite the AAPL config or use test results for symbol
+# selection.
+data_slices:
+  - symbol: AAPL
+    config: configs/data/aapl_wrds_20260313_20260410.yaml
+
+screening:
+  validation_min_dates: 2
+  horizons:
+    - 1s
+    - 5s
+    - 10s
+    - 30s
+    - 60s
+  decile_horizons:
+    - 1s
+    - 5s
+  pass_move_over_cost: 1.0
+  strong_pass_move_over_cost: 1.5
+  fail_move_over_cost: 0.5
+
+controls:
+  group_metadata_affects_signal_logic: false
+  group_metadata_affects_labeling: false
+  group_metadata_affects_threshold_selection: false
+  group_metadata_affects_horizon_selection: false
+  group_metadata_affects_cost_accounting: false
+  test_used_for_symbol_selection: false

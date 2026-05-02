@@ -8,7 +8,9 @@ from pathlib import Path
 
 import pandas as pd
 
-from ..schema import EVENT_TIME
+from ..alignment import TRADING_DATE
+from ..schema import EVENT_TIME, SYMBOL
+from ..signals import SIGNAL_QUOTE_IMBALANCE, SIGNAL_QUOTE_REVISION_BPS
 from ..utils import DataSliceConfig
 from .threshold_selection import (
     THRESHOLD_SELECTION_POLICY_NOTE,
@@ -46,7 +48,7 @@ def build_threshold_selection(
     """Run threshold selection v1 from signal rows."""
 
     inputs = find_walk_forward_input(config, processed_dir=processed_dir)
-    signal_rows = _read_signal_csv(inputs.signal_path)
+    signal_rows = _read_signal_csv(inputs.signal_path, config=selection_config)
     selection = run_threshold_selection_v1(signal_rows, config=selection_config)
     paths = _write_threshold_selection_outputs(
         config,
@@ -62,10 +64,27 @@ def build_threshold_selection(
     )
 
 
-def _read_signal_csv(path: Path) -> pd.DataFrame:
+def _read_signal_csv(path: Path, *, config: ThresholdSelectionConfig) -> pd.DataFrame:
     if not path.exists():
         raise WalkForwardWorkflowError(f"Signal input file is missing: {path}")
-    frame = pd.read_csv(path)
+    usecols = [
+        EVENT_TIME,
+        SYMBOL,
+        TRADING_DATE,
+        config.signed_flow_column,
+        SIGNAL_QUOTE_IMBALANCE,
+        SIGNAL_QUOTE_REVISION_BPS,
+    ]
+    for horizon in config.horizons:
+        suffix = horizon.lower().replace(" ", "").replace(".", "p")
+        usecols.extend(
+            [
+                f"label_available_{suffix}",
+                f"future_midquote_direction_{suffix}",
+                f"future_midquote_return_bps_{suffix}",
+            ]
+        )
+    frame = pd.read_csv(path, usecols=tuple(dict.fromkeys(usecols)))
     frame[EVENT_TIME] = pd.to_datetime(frame[EVENT_TIME], format="mixed")
     return frame
 

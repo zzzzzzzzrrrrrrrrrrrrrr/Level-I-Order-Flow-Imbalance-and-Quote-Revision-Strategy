@@ -45,27 +45,19 @@ subject to `min_train_signals`.
 
 ## Current AAPL Slice
 
-For `aapl_wrds_20260408_20260410`, threshold selection v1 currently produces:
+For `aapl_wrds_20260313_20260410`, threshold selection v1 currently produces:
 
-- input signal rows: `1,648,869`
-- output summary rows: `8`
-- trading dates: `2026-04-08`, `2026-04-09`, `2026-04-10`
-- fold count: `2`
+- input signal rows: `12,141,453`
+- output summary rows: `76`
+- trading dates: 20 dates from `2026-03-13` through `2026-04-10`, excluding `2026-04-03`
+- fold count: `19`
 - horizons: `100ms`, `500ms`, `1s`, `5s`
 - minimum train signals: `100`
 
-Selected thresholds and test results:
-
-| fold | horizon | QI | signed-flow | QR bps | test mean aligned return bps | test accuracy |
-| --- | --- | ---: | ---: | ---: | ---: | ---: |
-| `fold_001` | `100ms` | `0.25` | `0.25` | `0.25` | `0.3825` | `0.5688` |
-| `fold_001` | `500ms` | `0.25` | `0.10` | `0.25` | `-0.0220` | `0.5191` |
-| `fold_001` | `1s` | `0.25` | `0.25` | `0.10` | `0.2103` | `0.4850` |
-| `fold_001` | `5s` | `0.25` | `0.10` | `0.25` | `2.2773` | `0.4993` |
-| `fold_002` | `100ms` | `0.25` | `0.25` | `0.25` | `0.3909` | `0.5322` |
-| `fold_002` | `500ms` | `0.00` | `0.25` | `0.25` | `0.3974` | `0.4898` |
-| `fold_002` | `1s` | `0.25` | `0.10` | `0.25` | `0.4187` | `0.5289` |
-| `fold_002` | `5s` | `0.25` | `0.10` | `0.25` | `0.3637` | `0.6494` |
+Selected thresholds and per-fold test results are written to
+`*_threshold_selection_v1.csv`. This table is intentionally not condensed into
+a single final threshold because the stage is still diagnostic and not a final
+hyperparameter selection.
 
 This output is not a backtest. Cost modeling and execution-aware accounting
 remain separate stages.

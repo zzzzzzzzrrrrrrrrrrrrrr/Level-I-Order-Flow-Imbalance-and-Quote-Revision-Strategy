@@ -38,16 +38,15 @@ split_policy = expanding_train_next_validation_next_test
 selection_policy = select_on_validation_evaluate_once_on_test
 ```
 
-For the current three-day AAPL slice, this creates one fold:
+For the current 20-day AAPL slice, this creates 18 held-out test folds:
 
 ```text
-train      = 2026-04-08
-validation = 2026-04-09
-test       = 2026-04-10
+first fold: train = 2026-03-13, validation = 2026-03-16, test = 2026-03-17
+last fold:  train = 2026-03-13..2026-04-08, validation = 2026-04-09, test = 2026-04-10
 ```
 
-For longer samples, v1 expands the train dates and advances validation/test by
-one date.
+For longer samples, v1 continues to expand the train dates and advance
+validation/test by one date.
 
 ## Selection Objective
 

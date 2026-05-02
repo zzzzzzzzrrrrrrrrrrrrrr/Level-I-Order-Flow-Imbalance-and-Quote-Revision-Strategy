@@ -67,19 +67,19 @@ quote/tick rule conflicts.
 
 ## Current AAPL Slice
 
-For `aapl_wrds_20260408_20260410`, trade signing v1 currently produces:
+For `aapl_wrds_20260313_20260410`, trade signing v1 currently produces:
 
-- input aligned trade rows: `1,648,869`
-- output signed trade rows: `1,648,869`
-- quote matched rows: `1,648,788`
-- quote unmatched rows: `81`
-- quote-rule signed rows: `1,215,146`
-- tick-rule fallback signed rows: `433,721`
-- unknown sign rows: `2`
-- buy sign rows: `950,756`
-- sell sign rows: `698,111`
-- quote midpoint tie rows: `433,642`
-- quote/tick conflict rows: `243,447`
+- input aligned trade rows: `12,141,453`
+- output signed trade rows: `12,141,453`
+- quote matched rows: `12,141,282`
+- quote unmatched rows: `171`
+- quote-rule signed rows: `9,054,301`
+- tick-rule fallback signed rows: `3,087,121`
+- unknown sign rows: `31`
+- buy sign rows: `6,823,163`
+- sell sign rows: `5,318,259`
+- quote midpoint tie rows: `3,086,981`
+- quote/tick conflict rows: `1,874,402`
 
 Quote/tick conflicts are diagnostic rows where tick rule would disagree with
 quote rule. In v1, quote rule remains primary when it is available.

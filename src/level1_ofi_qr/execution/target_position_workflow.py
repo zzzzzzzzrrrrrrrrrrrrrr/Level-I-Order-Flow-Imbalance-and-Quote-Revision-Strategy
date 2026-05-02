@@ -8,7 +8,8 @@ from pathlib import Path
 
 import pandas as pd
 
-from ..schema import EVENT_TIME
+from ..alignment import TRADING_DATE
+from ..schema import EVENT_TIME, SYMBOL
 from ..utils import DataSliceConfig
 from .target_position import (
     TARGET_POSITION_POLICY_NOTE,
@@ -77,7 +78,7 @@ def build_target_position_accounting(
     """Run target-position accounting v1 from signal rows."""
 
     inputs = find_target_position_accounting_input(config, processed_dir=processed_dir)
-    signal_rows = _read_signal_csv(inputs.signal_path)
+    signal_rows = _read_signal_csv(inputs.signal_path, config=accounting_config)
     result = run_target_position_accounting_v1(signal_rows, config=accounting_config)
     paths = _write_target_position_outputs(
         config,
@@ -97,8 +98,16 @@ def build_target_position_accounting(
     )
 
 
-def _read_signal_csv(path: Path) -> pd.DataFrame:
-    frame = pd.read_csv(path)
+def _read_signal_csv(path: Path, *, config: TargetPositionAccountingConfig) -> pd.DataFrame:
+    usecols = [
+        EVENT_TIME,
+        SYMBOL,
+        TRADING_DATE,
+        config.signal_column,
+        config.midquote_column,
+        config.spread_column,
+    ]
+    frame = pd.read_csv(path, usecols=tuple(dict.fromkeys(usecols)))
     frame[EVENT_TIME] = pd.to_datetime(frame[EVENT_TIME], format="mixed")
     return frame
 

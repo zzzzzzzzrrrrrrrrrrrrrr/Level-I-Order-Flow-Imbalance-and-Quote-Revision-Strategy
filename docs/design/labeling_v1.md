@@ -63,24 +63,24 @@ The default `dead_zone_bps` is `0.0`.
 
 ## Current AAPL Slice
 
-For `aapl_wrds_20260408_20260410`, labeling v1 currently produces:
+For `aapl_wrds_20260313_20260410`, labeling v1 currently produces:
 
-- input feature rows: `1,648,869`
-- input quote rows: `2,029,892`
-- output labeled rows: `1,648,869`
-- current midquote missing rows: `80`
+- input feature rows: `12,141,453`
+- input quote rows: `21,287,434`
+- output labeled rows: `12,141,453`
+- current midquote missing rows: `170`
 - horizons: `100ms`, `500ms`, `1s`, `5s`
 - dead zone: `0.0 bps`
 - label available rows:
-  - `100ms`: `1,648,736`
-  - `500ms`: `1,648,392`
-  - `1s`: `1,647,377`
-  - `5s`: `1,644,743`
+  - `100ms`: `12,140,136`
+  - `500ms`: `12,136,449`
+  - `1s`: `12,130,975`
+  - `5s`: `12,107,013`
 - label missing rows:
-  - `100ms`: `133`
-  - `500ms`: `477`
-  - `1s`: `1,492`
-  - `5s`: `4,126`
+  - `100ms`: `1,317`
+  - `500ms`: `5,004`
+  - `1s`: `10,478`
+  - `5s`: `34,440`
 
 Missing labels are retained as nulls. They mainly occur when the current quote
 is unavailable at the feature timestamp or when there is no same-session future

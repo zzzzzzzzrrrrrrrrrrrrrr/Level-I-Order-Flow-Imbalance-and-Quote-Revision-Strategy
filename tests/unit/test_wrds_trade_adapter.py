@@ -18,7 +18,7 @@ CONFIG_PATH = (
     Path(__file__).resolve().parents[2]
     / "configs"
     / "data"
-    / "aapl_wrds_20260408_20260410.yaml"
+    / "aapl_wrds_20260313_20260410.yaml"
 )
 FIXTURE_PATH = Path(__file__).resolve().parents[1] / "fixtures" / "wrds_raw_trades.csv"
 

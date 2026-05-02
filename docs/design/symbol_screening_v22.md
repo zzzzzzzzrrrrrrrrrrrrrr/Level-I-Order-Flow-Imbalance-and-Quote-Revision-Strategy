@@ -21,6 +21,59 @@ event_time | symbol | trading_date | ...
 
 All screening calculations group by `symbol` and `trading_date`.
 
+## Group-Aware Experiment Design
+
+Liquidity-regime groups are first-class experiment-design objects when an
+experiment config includes `universe.groups`. They are ex-ante research
+hypotheses, not result labels or post-run chart folders.
+
+The phase-1 group-aware experiment is:
+
+```text
+configs/experiments/v22_symbol_screen_phase1_by_liquidity_regime_same_20d.yaml
+```
+
+Its screen name and output root are both:
+
+```text
+v22_symbol_screen_phase1_by_liquidity_regime_same_20d
+```
+
+The experiment defines:
+
+- `group_A_ultra_liquid_mega_cap_control`
+- `group_B_high_turnover_tick_sensitive_candidates`
+- `group_C_non_tech_large_cap_liquidity_controls`
+
+Group metadata propagates into summary, decile, horizon-sweep, group-level,
+manifest, notes, and figure artifacts through:
+
+- `group_id`
+- `group_label`
+- `research_role`
+- `liquidity_hypothesis`
+- `date_window`
+
+Boundary rule:
+
+```text
+group metadata affects reporting, aggregation, diagnostics, and artifact names only.
+It must not affect signal generation, labeling, threshold selection, horizon
+selection, cost accounting, or pass/fail criteria.
+```
+
+The same-date-window claim is verified from manifests and actual processed
+trading dates. The experiment config declares the expected 20 trading dates,
+but the output manifest records per-symbol checks for:
+
+- same start date
+- same end date
+- same trading-date list
+- same session filter
+- raw row count when a WRDS raw manifest exists
+- processed row count
+- missing trading dates
+
 ## Inputs
 
 Required:
@@ -50,6 +103,24 @@ V2.2 writes only diagnostic result tables and figures. Experiment-config runs de
 - `outputs/experiments/<screen_name>/figures/v22_symbol_screen_decile_markout.svg`
 
 These outputs include explicit `universe_name`, `symbol`, `split`, `horizon`, and `signal_bucket` columns where applicable.
+
+Group-aware experiment-config runs also write additive artifacts:
+
+- `outputs/experiments/<screen_name>/tables/all_symbols_summary.csv`
+- `outputs/experiments/<screen_name>/tables/all_symbols_decile_markout.csv`
+- `outputs/experiments/<screen_name>/tables/all_symbols_horizon_sweep.csv`
+- `outputs/experiments/<screen_name>/tables/group_level_summary.csv`
+- `outputs/experiments/<screen_name>/tables/group_level_ranking.csv`
+- `outputs/experiments/<screen_name>/figures/all_symbols_move_over_cost.svg`
+- `outputs/experiments/<screen_name>/figures/all_symbols_net_per_trip.svg`
+- `outputs/experiments/<screen_name>/figures/group_move_over_cost.svg`
+- `outputs/experiments/<screen_name>/figures/group_decile_markout.svg`
+- `outputs/experiments/<screen_name>/groups/<group_id>/tables/`
+- `outputs/experiments/<screen_name>/groups/<group_id>/figures/`
+- `outputs/experiments/<screen_name>/groups/<group_id>/notes.md`
+
+The legacy `v22_symbol_screen_*.csv` and SVG outputs remain available for
+backward compatibility.
 
 ## Validation Policy
 
@@ -96,3 +167,8 @@ These are screening diagnostics, not profitability claims.
 The AAPL data-slice config is intentionally unchanged and remains the reproducible negative benchmark. The larger intended universe is declared in `configs/experiments/v22_symbol_screen_liquid_large_cap.yaml`.
 
 That experiment config can list many intended symbols while only including processed symbols under `data_slices`. A true cross-symbol screen requires adding one processed data-slice config per symbol after extraction and pipeline generation. Adding those symbols should happen through data configs and generated slice outputs, not by changing core schemas.
+
+The phase-1 liquidity-regime experiment follows the same rule. At creation
+time, it references only the existing AAPL processed slice; the remaining
+symbols should be added to `data_slices` only after WRDS extraction and
+per-symbol pipeline artifacts exist for the same 20-trading-day window.

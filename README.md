@@ -294,12 +294,23 @@ Run the cheap cross-symbol screening layer:
 D:\python_library_envs\VHFT_lab\python.exe scripts\run_symbol_screen_v22.py configs\experiments\v22_symbol_screen_liquid_large_cap.yaml
 ```
 
+Run the phase-1 liquidity-regime diagnostic scaffold:
+
+```powershell
+D:\python_library_envs\VHFT_lab\python.exe scripts\run_symbol_screen_v22.py configs\experiments\v22_symbol_screen_phase1_by_liquidity_regime_same_20d.yaml
+```
+
 Symbol screening v2.2 does not modify the raw, cleaned, aligned, feature,
 label, or WRDS mapping schemas. It uses the existing long-form `symbol` column
 and the existing `universe.symbols` config field. The AAPL data-slice config is
 left unchanged so it remains a reproducible negative benchmark. The experiment
 config declares the larger intended universe and lists the processed data slices
 currently available for screening.
+
+The phase-1 liquidity-regime config treats groups as ex-ante research-design
+objects. Group metadata is propagated to reporting tables, figures, manifests,
+notes, and reports, but it does not alter signals, labels, thresholds, horizons,
+or cost accounting.
 
 The screening workflow writes new result tables only:
 

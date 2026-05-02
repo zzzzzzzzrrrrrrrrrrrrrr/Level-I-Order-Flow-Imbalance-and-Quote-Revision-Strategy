@@ -100,6 +100,65 @@ def test_symbol_screening_summary_uses_validation_not_test_for_pass_flag() -> No
     assert not bool(summary["test_used_for_selection"])
 
 
+def test_symbol_screening_group_metadata_is_reporting_only() -> None:
+    candidates = pd.DataFrame(
+        [
+            _candidate("AAA", "2026-04-01", "2026-04-01T09:30:00-04:00", 100.0, 1.0),
+            _candidate("AAA", "2026-04-02", "2026-04-02T09:30:00-04:00", 100.0, 2.0),
+        ]
+    )
+    quotes = pd.DataFrame(
+        [
+            _quote("AAA", "2026-04-01", "2026-04-01T09:30:00-04:00", 100.0),
+            _quote("AAA", "2026-04-01", "2026-04-01T09:30:01-04:00", 100.01),
+            _quote("AAA", "2026-04-02", "2026-04-02T09:30:00-04:00", 100.0),
+            _quote("AAA", "2026-04-02", "2026-04-02T09:30:01-04:00", 100.02),
+        ]
+    )
+
+    base = build_symbol_screening_tables(
+        candidates,
+        quotes,
+        screening_config=SymbolScreenV22Config(
+            horizons=("1s",),
+            decile_horizons=("1s",),
+            validation_min_dates=1,
+        ),
+        configured_symbols=("AAA",),
+    )
+    grouped = build_symbol_screening_tables(
+        candidates,
+        quotes,
+        screening_config=SymbolScreenV22Config(
+            date_window_name="same_20_trading_day_window",
+            horizons=("1s",),
+            decile_horizons=("1s",),
+            validation_min_dates=1,
+            symbol_metadata={
+                "AAA": {
+                    "group_id": "group_A_ultra_liquid_mega_cap_control",
+                    "group_label": "Group A",
+                    "research_role": "ultra-liquid mega-cap control",
+                    "hypothesis": "Configured ex-ante liquidity-regime hypothesis.",
+                }
+            },
+        ),
+        configured_symbols=("AAA",),
+    )
+
+    assert grouped.summary.iloc[0]["group_id"] == "group_A_ultra_liquid_mega_cap_control"
+    assert grouped.summary.iloc[0]["group_label"] == "Group A"
+    assert grouped.summary.iloc[0]["date_window"] == "same_20_trading_day_window"
+    assert (
+        grouped.summary.iloc[0]["top_1pct_move_over_cost"]
+        == base.summary.iloc[0]["top_1pct_move_over_cost"]
+    )
+    assert (
+        bool(grouped.summary.iloc[0]["validation_pass_flag"])
+        == bool(base.summary.iloc[0]["validation_pass_flag"])
+    )
+
+
 def _candidate(
     symbol: str,
     trading_date: str,

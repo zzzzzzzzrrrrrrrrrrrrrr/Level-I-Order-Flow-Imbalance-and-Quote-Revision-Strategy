@@ -23,3 +23,9 @@ Decision docs record why a methodology or architecture choice was accepted.
 ## Current Important Decision
 
 The AAPL negative baseline is preserved by tag `aapl-negative-baseline-v22`. Generalized screening is configured separately through `configs/experiments/v22_symbol_screen_liquid_large_cap.yaml`; the original AAPL data config remains unchanged for reproducibility.
+
+The phase-1 cross-symbol diagnostic is configured through
+`configs/experiments/v22_symbol_screen_phase1_by_liquidity_regime_same_20d.yaml`.
+Its liquidity-regime groups are ex-ante research-design objects and reporting
+metadata only; they must not change signal generation, labels, thresholds,
+horizons, or costs.

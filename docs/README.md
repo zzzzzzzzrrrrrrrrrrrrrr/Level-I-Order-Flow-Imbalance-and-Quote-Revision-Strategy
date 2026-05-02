@@ -28,19 +28,22 @@ git show aapl-negative-baseline-v22 --no-patch --format=fuller
 
 ## Read This First
 
-1. `reports/symbol_screening_v22_2026-05-01.md`
+1. `reports/symbol_screening_v22_phase1_by_liquidity_regime_same_20d.md`
+   Phase-1 group-aware liquidity-regime screening design and audit requirements.
+
+2. `reports/symbol_screening_v22_2026-05-01.md`
    Current AAPL negative benchmark conclusion.
 
-2. `reports/microstructure_v21_diagnostic_2026-05-01.md`
+3. `reports/microstructure_v21_diagnostic_2026-05-01.md`
    Passive/hybrid execution diagnostic and submitted-vs-filled accounting.
 
-3. `reports/microstructure_v2_diagnostic_2026-05-01.md`
+4. `reports/microstructure_v2_diagnostic_2026-05-01.md`
    Earlier microstructure diagnostics that showed why market-order execution was too expensive.
 
-4. `reports/aapl_wrds_20260313_20260410_pipeline_report.md`
+5. `reports/aapl_wrds_20260313_20260410_pipeline_report.md`
    End-to-end AAPL 20-day pipeline report before v2 microstructure extensions.
 
-5. `reports/project_milestones.md`
+6. `reports/project_milestones.md`
    Chronological milestone log.
 
 ## Directory Roles
@@ -58,6 +61,12 @@ AAPL negative benchmark through v2.2 symbol screening:
 
 ```powershell
 D:\python_library_envs\VHFT_lab\python.exe scripts\run_symbol_screen_v22.py configs\experiments\v22_symbol_screen_liquid_large_cap.yaml
+```
+
+Phase-1 liquidity-regime v2.2 diagnostic scaffold:
+
+```powershell
+D:\python_library_envs\VHFT_lab\python.exe scripts\run_symbol_screen_v22.py configs\experiments\v22_symbol_screen_phase1_by_liquidity_regime_same_20d.yaml
 ```
 
 AAPL v2.1 focused passive/hybrid diagnostic:

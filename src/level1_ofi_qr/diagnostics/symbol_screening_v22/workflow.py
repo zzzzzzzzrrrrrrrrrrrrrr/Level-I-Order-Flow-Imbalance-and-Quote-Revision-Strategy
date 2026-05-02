@@ -1,4 +1,4 @@
-"""Workflow and table builders for v2.2 symbol screening diagnostics."""
+?"""Workflow and table builders for v2.2 symbol screening diagnostics."""
 
 from __future__ import annotations
 
@@ -22,6 +22,12 @@ from ..microstructure_v21.workflow import (
 )
 from ..microstructure_v21.candidate_pool import attach_quote_state
 from .config import SymbolScreenV22Config
+from .group_reporting import (
+    attach_data_slice_audit_to_tables,
+    build_data_slice_audit,
+    build_date_window_audit,
+    write_group_aware_outputs,
+)
 
 
 class SymbolScreenV22Error(ValueError):
@@ -81,6 +87,14 @@ def build_symbol_screen_v22(
     )
     quotes = _load_quotes(quote_path, symbols=config.symbols)
     orders = _load_optional_orders(root, slice_name=config.slice_name, symbols=config.symbols)
+    data_slice_audit = (
+        build_data_slice_audit(
+            config,
+            root=root,
+            quotes=quotes,
+            candidates=candidates,
+        ),
+    )
     tables = build_symbol_screening_tables(
         candidates,
         quotes,
@@ -97,6 +111,7 @@ def build_symbol_screen_v22(
             "candidate_source": _candidate_source_path(root, config.slice_name, screening_config),
             "orders_path": root / f"{config.slice_name}_microstructure_v21_orders.csv",
         },
+        data_slice_audit=data_slice_audit,
         tables_dir=tables_dir,
         figures_dir=figures_dir,
     )
@@ -120,6 +135,7 @@ def build_symbol_screen_v22_for_data_configs(
     deciles = []
     horizon_sweeps = []
     input_paths: dict[str, Path] = {}
+    data_slice_audit = []
     for config in configs:
         root = Path(processed_dir or config.storage["processed_dir"]) / config.slice_name
         quote_path = root / f"{config.slice_name}_quote_features_v1.csv"
@@ -133,6 +149,14 @@ def build_symbol_screen_v22_for_data_configs(
         )
         quotes = _load_quotes(quote_path, symbols=config.symbols)
         orders = _load_optional_orders(root, slice_name=config.slice_name, symbols=config.symbols)
+        data_slice_audit.append(
+            build_data_slice_audit(
+                config,
+                root=root,
+                quotes=quotes,
+                candidates=candidates,
+            )
+        )
         tables = build_symbol_screening_tables(
             candidates,
             quotes,
@@ -163,6 +187,7 @@ def build_symbol_screen_v22_for_data_configs(
         slice_name=screening_config.universe_name,
         screening_config=screening_config,
         input_paths=input_paths,
+        data_slice_audit=tuple(data_slice_audit),
         tables_dir=tables_dir,
         figures_dir=figures_dir,
     )
@@ -312,6 +337,10 @@ def _prepare_candidates(rows: pd.DataFrame) -> pd.DataFrame:
         QUOTED_SPREAD,
     ):
         result[column] = pd.to_numeric(result[column], errors="coerce")
+    if "displayed_depth" in result.columns:
+        result["displayed_depth"] = pd.to_numeric(result["displayed_depth"], errors="coerce")
+    else:
+        result["displayed_depth"] = np.nan
     result["spread_bps"] = result[QUOTED_SPREAD] / result[MIDQUOTE] * 10000.0
     result = result.dropna(
         subset=[SYMBOL, TRADING_DATE, EVENT_TIME, "side", "predicted_edge_bps", MIDQUOTE],
@@ -398,6 +427,7 @@ def _build_deciles(
     for (symbol, split), group in candidates.groupby([SYMBOL, "split"], sort=False):
         if group["predicted_edge_bps"].nunique(dropna=True) < 2:
             continue
+        metadata = _symbol_screen_metadata(symbol, screening_config=screening_config)
         working = group.copy()
         working["signal_decile"] = (
             pd.qcut(working["predicted_edge_bps"], 10, labels=False, duplicates="drop") + 1
@@ -412,6 +442,7 @@ def _build_deciles(
                     {
                         "universe_name": screening_config.universe_name,
                         "symbol": symbol,
+                        **metadata,
                         "split": split,
                         "horizon": horizon,
                         "signal_decile": int(decile),
@@ -433,6 +464,7 @@ def _build_horizon_sweep(
 ) -> pd.DataFrame:
     rows = []
     for (symbol, split), group in candidates.groupby([SYMBOL, "split"], sort=False):
+        metadata = _symbol_screen_metadata(symbol, screening_config=screening_config)
         bucket_masks = _bucket_masks(group, screening_config=screening_config)
         for horizon in screening_config.horizons:
             move_column = f"move_{horizon}_bps"
@@ -446,6 +478,7 @@ def _build_horizon_sweep(
                     {
                         "universe_name": screening_config.universe_name,
                         "symbol": symbol,
+                        **metadata,
                         "split": split,
                         "signal_bucket": bucket,
                         "horizon": horizon,
@@ -529,6 +562,9 @@ def _build_quote_spread_stats(quotes: pd.DataFrame) -> pd.DataFrame:
         rows.append(
             {
                 "symbol": symbol,
+                "quote_count": int(len(group)),
+                "quote_trading_dates": _join_dates(group[TRADING_DATE].dropna().unique()),
+                "quote_trading_date_count": int(group[TRADING_DATE].dropna().nunique()),
                 "mean_spread_bps": float(spread.mean()),
                 "median_spread_bps": float(spread.median()),
                 "p90_spread_bps": float(spread.quantile(0.90)),
@@ -547,6 +583,7 @@ def _build_summary(
 ) -> pd.DataFrame:
     rows = []
     for symbol, symbol_candidates in candidates.groupby(SYMBOL, sort=True):
+        metadata = _symbol_screen_metadata(symbol, screening_config=screening_config)
         validation_sweep = horizon_sweep.loc[
             horizon_sweep["symbol"].astype(str).eq(str(symbol))
             & horizon_sweep["split"].eq("validation")
@@ -562,6 +599,13 @@ def _build_summary(
             else bool(filled_markout < unfilled_markout)
         )
         top1_ratio = top1.get("move_over_cost", np.nan)
+        top1_move = top1.get("mean_move_bps")
+        top1_cost = top1.get("mean_cost_bps")
+        net_per_trip = (
+            None
+            if top1_move is None or top1_cost is None
+            else float(top1_move) - float(top1_cost)
+        )
         validation_pass = bool(
             pd.notna(top1_ratio)
             and top1_ratio > screening_config.pass_move_over_cost
@@ -571,19 +615,35 @@ def _build_summary(
             {
                 "universe_name": screening_config.universe_name,
                 "symbol": symbol,
+                **metadata,
                 "trading_start": str(symbol_candidates[TRADING_DATE].min()),
                 "trading_end": str(symbol_candidates[TRADING_DATE].max()),
+                "candidate_trading_dates": _join_dates(
+                    symbol_candidates[TRADING_DATE].dropna().unique()
+                ),
+                "candidate_trading_date_count": int(symbol_candidates[TRADING_DATE].nunique()),
                 "candidate_events": len(symbol_candidates),
+                "quote_count": spread.get("quote_count"),
+                "quote_trading_dates": spread.get("quote_trading_dates"),
+                "quote_trading_date_count": spread.get("quote_trading_date_count"),
+                "raw_trade_count": None,
+                "trade_count": None,
                 "mean_spread_bps": spread.get("mean_spread_bps"),
                 "median_spread_bps": spread.get("median_spread_bps"),
                 "p90_spread_bps": spread.get("p90_spread_bps"),
+                "median_depth": _safe_median(symbol_candidates["displayed_depth"]),
                 "mean_cost_bps": float(symbol_candidates["expected_cost_bps"].mean()),
                 "top_1pct_best_horizon": top1.get("horizon"),
-                "top_1pct_mean_move_bps": top1.get("mean_move_bps"),
-                "top_1pct_mean_cost_bps": top1.get("mean_cost_bps"),
+                "top_1pct_mean_move_bps": top1_move,
+                "top_1pct_mean_cost_bps": top1_cost,
                 "top_1pct_move_over_cost": top1_ratio,
                 "top_5pct_best_horizon": top5.get("horizon"),
                 "top_5pct_move_over_cost": top5.get("move_over_cost"),
+                "gross_per_trip": top1_move,
+                "cost_per_trip": top1_cost,
+                "net_per_trip": net_per_trip,
+                "move_over_cost": top1_ratio,
+                "best_horizon": top1.get("horizon"),
                 "filled_1s_markout_bps": filled_markout,
                 "unfilled_1s_markout_bps": unfilled_markout,
                 "adverse_selection_flag": adverse_flag,
@@ -601,6 +661,22 @@ def _build_summary(
             }
         )
     return pd.DataFrame(rows)
+
+
+def _symbol_screen_metadata(
+    symbol: object,
+    *,
+    screening_config: SymbolScreenV22Config,
+) -> dict[str, object]:
+    metadata = screening_config.symbol_metadata.get(str(symbol), {})
+    return {
+        "group_id": metadata.get("group_id"),
+        "group_label": metadata.get("group_label"),
+        "research_role": metadata.get("research_role"),
+        "liquidity_hypothesis": metadata.get("hypothesis")
+        or metadata.get("liquidity_hypothesis"),
+        "date_window": screening_config.date_window_name,
+    }
 
 
 def _best_bucket(sweep: pd.DataFrame, bucket: str) -> dict[str, object]:
@@ -637,6 +713,7 @@ def _write_outputs(
     slice_name: str,
     screening_config: SymbolScreenV22Config,
     input_paths: dict[str, Path],
+    data_slice_audit: tuple[dict[str, object], ...] = (),
     tables_dir: str | Path,
     figures_dir: str | Path,
 ) -> SymbolScreenV22OutputPaths:
@@ -644,6 +721,7 @@ def _write_outputs(
     figures_root = Path(figures_dir)
     tables_root.mkdir(parents=True, exist_ok=True)
     figures_root.mkdir(parents=True, exist_ok=True)
+    tables = attach_data_slice_audit_to_tables(tables, data_slice_audit)
     paths = SymbolScreenV22OutputPaths(
         summary_csv_path=tables_root / "v22_symbol_screen_summary.csv",
         deciles_csv_path=tables_root / "v22_symbol_screen_deciles.csv",
@@ -656,15 +734,34 @@ def _write_outputs(
     tables.deciles.to_csv(paths.deciles_csv_path, index=False)
     tables.horizon_sweep.to_csv(paths.horizon_sweep_csv_path, index=False)
     _write_figures(tables, paths=paths, slice_name=slice_name, screening_config=screening_config)
+    extra_outputs = write_group_aware_outputs(
+        tables,
+        tables_root=tables_root,
+        figures_root=figures_root,
+        slice_name=slice_name,
+        screening_config=screening_config,
+    )
     manifest = {
         "slice_name": slice_name,
         "diagnostic_version": "symbol_screening_v22",
         "diagnostic_only": True,
         "core_schema_modified": False,
+        "group_metadata_affects_signal_logic": False,
+        "group_metadata_affects_labeling": False,
+        "group_metadata_affects_thresholds": False,
+        "group_metadata_affects_horizons": False,
+        "group_metadata_affects_costs": False,
         "test_used_for_selection": False,
         "inputs": {key: str(value) for key, value in input_paths.items()},
         "outputs": {key: str(value) for key, value in asdict(paths).items()},
+        "extra_outputs": {key: str(value) for key, value in extra_outputs.items()},
         "config": asdict(screening_config),
+        "data_slices": list(data_slice_audit),
+        "date_window_audit": build_date_window_audit(
+            tables.summary,
+            screening_config=screening_config,
+            data_slice_audit=data_slice_audit,
+        ),
         "row_counts": {
             "summary": len(tables.summary),
             "deciles": len(tables.deciles),
@@ -733,6 +830,17 @@ def _safe_ratio(numerator: float, denominator: float) -> float | None:
     if denominator == 0 or pd.isna(denominator):
         return None
     return float(numerator) / float(denominator)
+
+
+def _safe_median(values: pd.Series) -> float | None:
+    numeric = pd.to_numeric(values, errors="coerce").dropna()
+    if numeric.empty:
+        return None
+    return float(numeric.median())
+
+
+def _join_dates(values: object) -> str:
+    return ";".join(sorted(str(value) for value in values if pd.notna(value)))
 
 
 def _validate_config(config: SymbolScreenV22Config) -> None:

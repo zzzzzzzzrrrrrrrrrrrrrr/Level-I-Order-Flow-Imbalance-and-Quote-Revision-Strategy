@@ -8,7 +8,8 @@ from pathlib import Path
 
 import pandas as pd
 
-from ..schema import EVENT_TIME
+from ..alignment import TRADING_DATE
+from ..schema import EVENT_TIME, SYMBOL
 from ..utils import DataSliceConfig
 from .costs import (
     COST_MODEL_POLICY_NOTE,
@@ -73,7 +74,7 @@ def build_cost_model_diagnostics(
     """Run cost model v1 from signal rows."""
 
     inputs = find_cost_model_input(config, processed_dir=processed_dir)
-    signal_rows = _read_signal_csv(inputs.signal_path)
+    signal_rows = _read_signal_csv(inputs.signal_path, config=cost_config)
     result = run_cost_model_v1(signal_rows, config=cost_config)
     paths = _write_cost_model_outputs(
         config,
@@ -89,8 +90,24 @@ def build_cost_model_diagnostics(
     )
 
 
-def _read_signal_csv(path: Path) -> pd.DataFrame:
-    frame = pd.read_csv(path)
+def _read_signal_csv(path: Path, *, config: CostModelConfig) -> pd.DataFrame:
+    usecols = [
+        EVENT_TIME,
+        SYMBOL,
+        TRADING_DATE,
+        config.signal_column,
+        config.midquote_column,
+        config.spread_column,
+    ]
+    for horizon in config.horizons:
+        suffix = horizon.lower().replace(" ", "").replace(".", "p")
+        usecols.extend(
+            [
+                f"label_available_{suffix}",
+                f"future_midquote_return_bps_{suffix}",
+            ]
+        )
+    frame = pd.read_csv(path, usecols=tuple(dict.fromkeys(usecols)))
     frame[EVENT_TIME] = pd.to_datetime(frame[EVENT_TIME], format="mixed")
     return frame
 
@@ -143,4 +160,3 @@ def _write_cost_model_outputs(
         summary_csv_path=summary_csv_path,
         manifest_path=manifest_path,
     )
-

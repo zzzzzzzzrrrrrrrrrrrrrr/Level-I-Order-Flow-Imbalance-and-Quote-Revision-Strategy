@@ -8,7 +8,9 @@ from pathlib import Path
 
 import pandas as pd
 
-from ..schema import EVENT_TIME
+from ..alignment import TRADING_DATE
+from ..schema import EVENT_TIME, SYMBOL
+from ..signals.rules import SIGNAL_MIDQUOTE, SIGNAL_QUOTED_SPREAD
 from ..utils import DataSliceConfig
 from .backtest import (
     BACKTEST_V1_POLICY_NOTE,
@@ -98,7 +100,7 @@ def build_backtest_v1(
         processed_dir=processed_dir,
         tvt_summary_path=tvt_summary_path,
     )
-    signal_rows = _read_signal_csv(inputs.signal_path)
+    signal_rows = _read_signal_csv(inputs.signal_path, config=backtest_config)
     tvt_summary = pd.read_csv(inputs.tvt_summary_path)
     result = run_backtest_v1(signal_rows, tvt_summary, config=backtest_config)
     paths = _write_backtest_outputs(
@@ -119,8 +121,16 @@ def build_backtest_v1(
     )
 
 
-def _read_signal_csv(path: Path) -> pd.DataFrame:
-    frame = pd.read_csv(path)
+def _read_signal_csv(path: Path, *, config: BacktestV1Config) -> pd.DataFrame:
+    usecols = [
+        EVENT_TIME,
+        SYMBOL,
+        TRADING_DATE,
+        config.signal_column,
+        SIGNAL_MIDQUOTE,
+        SIGNAL_QUOTED_SPREAD,
+    ]
+    frame = pd.read_csv(path, usecols=tuple(dict.fromkeys(usecols)))
     frame[EVENT_TIME] = pd.to_datetime(frame[EVENT_TIME], format="mixed")
     return frame
 

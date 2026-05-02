@@ -35,3 +35,41 @@ V2.2 produces separate screening outputs:
 The screening layer can rank configured symbols by validation-only move/cost before any expensive full passive/hybrid execution grid is run.
 
 The original AAPL data-slice YAML remains unchanged for reproducibility. Larger universe screening is configured separately in `configs/experiments/v22_symbol_screen_liquid_large_cap.yaml`, where `universe.symbols` records the intended universe and `data_slices` records which processed symbol slices are currently available.
+
+## Addendum: Phase-1 Liquidity-Regime Groups
+
+Date: 2026-05-02
+
+Add a new group-aware diagnostic experiment:
+
+```text
+configs/experiments/v22_symbol_screen_phase1_by_liquidity_regime_same_20d.yaml
+```
+
+The experiment treats liquidity-regime groups as first-class, ex-ante
+research-design objects:
+
+- `group_A_ultra_liquid_mega_cap_control`
+- `group_B_high_turnover_tick_sensitive_candidates`
+- `group_C_non_tech_large_cap_liquidity_controls`
+
+The group names describe liquidity-regime hypotheses before the run. They do
+not encode expected winners, profitability, or post-run outcomes.
+
+Group metadata is propagated to diagnostic tables, figures, manifests, notes,
+and reports. It is explicitly not allowed to alter:
+
+- signal generation
+- labeling
+- threshold selection
+- horizon selection
+- cost accounting
+- pass/fail criteria
+
+The same-date-window assumption is audited from actual processed trading dates
+and data-slice metadata. The config declares the 2026-03-13 through 2026-04-10
+20-trading-day window, while manifests record per-symbol start/end/date-list
+checks and missing trading dates.
+
+This is an additive reporting and audit extension. It does not change the AAPL
+negative baseline, v1 baseline logic, WRDS mappings, or core schemas.

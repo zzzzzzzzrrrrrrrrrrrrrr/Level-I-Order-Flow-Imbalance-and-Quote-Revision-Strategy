@@ -24,7 +24,7 @@ from level1_ofi_qr.utils import load_data_slice_config
 
 
 ROOT = Path(__file__).resolve().parents[2]
-CONFIG_PATH = ROOT / "configs" / "data" / "aapl_wrds_20260408_20260410.yaml"
+CONFIG_PATH = ROOT / "configs" / "data" / "aapl_wrds_20260313_20260410.yaml"
 
 
 def labeled_feature_rows(label_value: int = -1) -> pd.DataFrame:

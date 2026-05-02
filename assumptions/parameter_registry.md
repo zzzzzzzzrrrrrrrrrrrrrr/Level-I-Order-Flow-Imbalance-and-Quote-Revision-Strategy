@@ -27,38 +27,77 @@ Current slice:
 
 ```text
 symbol = AAPL
-trading_dates = 2026-04-08, 2026-04-09, 2026-04-10
+config = configs/data/aapl_wrds_20260313_20260410.yaml
+trading_dates = 20 regular-session dates from 2026-03-13 through 2026-04-10
+excluded_date = 2026-04-03
 data_source = WRDS TAQ
 quote_table = taqmsec.nbbom_YYYYMMDD
 trade_table = taqmsec.ctm_YYYYMMDD
 ```
 
-This is a three-day AAPL demonstration and validation slice. It is not evidence
-that a U.S. equity Level-I strategy is broadly validated.
+This is a 20-day single-symbol AAPL prototype slice. It is not evidence that a
+U.S. equity Level-I strategy is broadly validated. The earlier
+`aapl_wrds_20260408_20260410` slice remains a small validation artifact only.
 
-Expanded AAPL prototype config:
+Current 20-day run result:
 
 ```text
-config = configs/data/aapl_wrds_20260313_20260410.yaml
-symbol = AAPL
-trading_dates = 20 regular-session dates from 2026-03-13 through 2026-04-10
-excluded_date = 2026-04-03
+raw quotes = 21,290,182
+raw trades = 12,141,562
+signal rows = 12,141,453
+held-out gross before spread cost = positive on 18/18 test days
+held-out net PnL after spread cost = negative on 18/18 test days
 ```
 
-This expanded config is intended to provide enough AAPL observations for
-prototype train / validation / test work before adding new ML model families.
+The positive gross edge is a research lead, not a profitable strategy claim.
+
+## Phase-1 Liquidity-Regime Screen Assumptions
+
+The next cross-symbol diagnostic experiment is additive and does not replace
+the AAPL negative benchmark:
+
+```text
+experiment = v22_symbol_screen_phase1_by_liquidity_regime_same_20d
+config = configs/experiments/v22_symbol_screen_phase1_by_liquidity_regime_same_20d.yaml
+research_status = diagnostic_only
+date_window = 2026-03-13 through 2026-04-10, same 20 configured trading dates
+session = regular_market_hours
+```
+
+Ex-ante liquidity-regime groups:
+
+```text
+Group A = AAPL, MSFT, NVDA, AMZN, META
+Group B = AMD, BAC, C, F
+Group C = XOM, JPM, WMT
+```
+
+Group definitions are research-design assumptions, not results. Group metadata
+may be used for reporting, aggregation, diagnostics, figure names, table names,
+notes, and report sections only. It must not alter signal generation, labeling,
+threshold selection, horizon selection, cost accounting, or pass/fail criteria.
+
+Same-window claims must be verified from the run manifest. The manifest should
+record actual per-symbol trading dates, same start/end checks, same
+trading-date-list checks, same session-filter checks, row counts when
+available, and missing trading dates. Results such as one group outperforming
+another belong in reports, not in this assumptions registry.
 
 ## Data Extraction Assumptions
 
 | Parameter | Current value | Type | Source / rationale | Sensitivity required | Status |
 | --- | --- | --- | --- | --- | --- |
 | symbol universe | `AAPL` | research_design | liquid large-cap demonstration slice | required | provisional |
-| trading dates | `2026-04-08` to `2026-04-10` | research_design | latest available WRDS sample at time of setup | required | provisional |
-| expanded AAPL dates | `2026-03-13` to `2026-04-10`, excluding `2026-04-03` | research_design | larger single-symbol prototype before adding ML complexity | required | config_added |
+| trading dates | `2026-03-13` to `2026-04-10`, excluding `2026-04-03` | research_design | larger single-symbol prototype before adding ML complexity | required | implemented_run_complete |
+| validation slice dates | `2026-04-08` to `2026-04-10` | research_design | earlier smoke / validation extract | optional | archived_validation_slice |
 | quote table | `taqmsec.nbbom_YYYYMMDD` | data_rule | national BBO quote state needed for midquote/QI/QR | not_applicable | implemented |
 | trade table | `taqmsec.ctm_YYYYMMDD` | data_rule | consolidated trade messages | not_applicable | implemented |
 | session | regular market hours | research_design / market_rule | current pipeline uses configured regular session | required | implemented |
 | timezone | `America/New_York` | data_rule | U.S. equity market timestamp convention | not_applicable | implemented |
+| phase-1 liquidity-regime universe | `AAPL`, `MSFT`, `NVDA`, `AMZN`, `META`, `AMD`, `BAC`, `C`, `F`, `XOM`, `JPM`, `WMT` | research_design | ex-ante liquidity-regime diagnostic groups; AAPL remains known negative control | required | configured_pending_extraction |
+| phase-1 date-window control | same 20 configured trading dates from `2026-03-13` through `2026-04-10` | research_design | controls date, volatility-regime, and news-cycle effects across symbols | required | configured_pending_manifest_verification |
+| phase-1 group metadata policy | reporting-only metadata | research_design | prevents liquidity-regime design from becoming implicit group-specific tuning | not_applicable | implemented_guardrail |
+| phase-1 test selection policy | no test-set symbol or parameter selection | methodology | preserves validation-only screening discipline | not_applicable | configured |
 
 ## WRDS / TAQ Field Assumptions
 
@@ -153,10 +192,10 @@ None, 5s, 1s, 500ms, 100ms
 | Parameter | Current value | Type | Source / rationale | Sensitivity required | Status |
 | --- | --- | --- | --- | --- | --- |
 | walk-forward split | expanding train dates, next-date test | methodology | avoid random split leakage | not_applicable | implemented |
-| min train dates | `1` | research_design | small three-day demo slice | required | provisional |
+| min train dates | `1` | research_design | prototype expanding-window smoke setting | required | provisional |
 | metric: signal accuracy | reported | methodology | direction agreement diagnostic | optional | implemented |
 | metric: signal-aligned return bps | reported | methodology | statistical edge proxy, not PnL | optional | implemented |
-| cost-adjusted evaluation | not implemented | cost_rule | blocked until cost model v1 | required | unresolved |
+| cost-adjusted evaluation | cost model and accounting layers | cost_rule | current 20-day run is net negative after spread costs | required | implemented_needs_optimization |
 
 ## Cost Model Assumptions
 
@@ -232,12 +271,12 @@ and evaluates frozen choices on test dates.
 | Parameter | Current value | Type | Source / rationale | Sensitivity required | Status |
 | --- | --- | --- | --- | --- | --- |
 | split policy | expanding train, next validation, next test | methodology | separates selection and final evaluation dates | not_applicable | implemented |
-| min train dates | `1` | research_design | small three-day demonstration slice | required | provisional |
+| min train dates | `1` | research_design | prototype expanding-window smoke setting | required | provisional |
 | validation objective | maximize validation final equity | research_design | simple account-level objective for v1 | required | implemented |
 | tie-break policy | higher validation equity, lower cost, lower order count | research_design | deterministic selection among equal candidates | required | implemented |
 | test leakage policy | test date not used for selection | methodology | avoids full-sample parameter choice | not_applicable | implemented |
 | model training | not implemented | research_design | v1 selects accounting parameters only | required | unresolved |
-| final hyperparameter claim | false | research_design | AAPL three-day slice is not final evidence | not_applicable | implemented |
+| final hyperparameter claim | false | research_design | AAPL 20-day single-symbol slice is not final evidence | not_applicable | implemented |
 
 ## Model Training Assumptions
 
@@ -247,15 +286,13 @@ generalized multi-symbol model claim.
 | Parameter | Current value | Type | Source / rationale | Sensitivity required | Status |
 | --- | --- | --- | --- | --- | --- |
 | model form | standardized linear feature score | research_design | no extra ML dependency; auditable baseline | required | implemented |
-| train date | `2026-04-08` | research_design | first date in current AAPL slice | required | prototype |
-| validation date | `2026-04-09` | research_design | model / threshold candidate selection date | required | prototype |
-| test date | `2026-04-10` | research_design | held-out accounting evaluation date, already inspected in prototype work | required | prototype_seen |
+| split policy | expanding train, next validation, next test | methodology | 18 held-out model folds on current 20-day slice | not_applicable | implemented |
 | label horizon | `500ms` | research_design | first model prototype target | required | implemented |
 | feature-set candidates | `qi_qr_flow_500ms`, `qi_qr_flow_multiwindow` | research_design | QI / QR / signed-flow baseline feature families | required | implemented |
 | score threshold grid | `0`, `0.10`, `0.25`, `0.50`, `0.75`, `1.0`, `1.25`, `1.50`, `2.0` | research_design | validation-selected model signal threshold | required | implemented |
 | minimum validation orders | `1000` | research_design | prevents no-trade candidates from winning by avoiding losses | required | implemented |
 | accounting engine | target-position accounting v1 | research_design | bounded test-date account state | required | implemented |
-| final model claim | false | research_design | AAPL three-day prototype only | not_applicable | implemented |
+| final model claim | false | research_design | AAPL 20-day single-symbol prototype only | not_applicable | implemented |
 
 ## Backtest Assumptions
 
