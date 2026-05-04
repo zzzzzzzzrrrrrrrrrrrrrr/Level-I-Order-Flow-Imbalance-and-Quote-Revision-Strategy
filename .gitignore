@@ -1,6 +1,7 @@
 # Local agent and editor state
 AGENTS.md
 AGENTS_v1_backup.md
+PROJECT_LOG.md
 .agents/
 .idea/
 
