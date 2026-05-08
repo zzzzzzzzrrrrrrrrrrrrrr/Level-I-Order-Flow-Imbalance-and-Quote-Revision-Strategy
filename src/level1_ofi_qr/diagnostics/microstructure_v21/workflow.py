@@ -47,6 +47,9 @@ class MicrostructureV21WorkflowError(ValueError):
     """Raised when v2.1 diagnostics cannot be built."""
 
 
+QUANTILE_CANDIDATE_POOLS: tuple[str, ...] = ("spread_q1", "spread_q1_or_q2")
+
+
 @dataclass(frozen=True)
 class MicrostructureV21OutputPaths:
     """Output paths for v2.1 diagnostics."""
@@ -177,10 +180,11 @@ def _read_prediction_candidate_events(path: Path) -> pd.DataFrame:
         "signal_quoted_spread",
     ]
     frames = []
-    previous_side: dict[tuple[str, str], int] = {}
+    row_offset = 0
     for chunk in pd.read_csv(path, usecols=usecols, chunksize=500_000):
         chunk[EVENT_TIME] = pd.to_datetime(chunk[EVENT_TIME], format="mixed")
-        chunk = chunk.sort_values([SYMBOL, TRADING_DATE, EVENT_TIME], kind="mergesort")
+        chunk["_prediction_row_order"] = range(row_offset, row_offset + len(chunk))
+        row_offset += len(chunk)
         score = pd.to_numeric(chunk[MODEL_SCORE_COLUMN], errors="coerce")
         finite_score = score.where(np.isfinite(score), 0.0)
         cost = pd.to_numeric(chunk["cost_aware_estimated_cost_bps"], errors="coerce").fillna(0.0)
@@ -191,22 +195,21 @@ def _read_prediction_candidate_events(path: Path) -> pd.DataFrame:
         chunk["tradable_edge_bps"] = edge
         chunk["side"] = side
         chunk["desired_side"] = chunk["side"].where(edge > 0, 0)
-        masks = []
-        for key, group in chunk.groupby([SYMBOL, TRADING_DATE], sort=False):
-            previous = previous_side.get((str(key[0]), str(key[1])), 0)
-            desired = group["desired_side"]
-            shifted = desired.shift(fill_value=previous)
-            mask = (desired != 0) & (desired != shifted)
-            masks.append(mask)
-            previous_side[(str(key[0]), str(key[1]))] = int(desired.iloc[-1])
-        if masks:
-            chunk_mask = pd.concat(masks).sort_index()
-            selected = chunk.loc[chunk_mask].copy()
-            if not selected.empty:
-                frames.append(selected)
+        frames.append(chunk)
     if not frames:
         return pd.DataFrame()
-    result = pd.concat(frames, ignore_index=True)
+    rows = pd.concat(frames, ignore_index=True)
+    rows = rows.sort_values(
+        [SYMBOL, TRADING_DATE, EVENT_TIME, "_prediction_row_order"],
+        kind="mergesort",
+    ).reset_index(drop=True)
+    desired = rows["desired_side"]
+    shifted = rows.groupby([SYMBOL, TRADING_DATE], sort=False)["desired_side"].shift(
+        fill_value=0
+    )
+    mask = (desired != 0) & (desired != shifted)
+    result = rows.loc[mask].copy().reset_index(drop=True)
+    result = result.drop(columns=["_prediction_row_order"])
     result["signal_id"] = [f"v21_signal_{index:08d}" for index in range(1, len(result) + 1)]
     result["selected_threshold_numeric"] = pd.to_numeric(
         result["selected_threshold"],
@@ -319,19 +322,7 @@ def _evaluate_variants(
     if candidates.empty:
         return pd.DataFrame()
     candidates = candidates.reset_index(drop=True)
-    global_thresholds = spread_thresholds(candidates)
-    pool_masks = {
-        pool: candidate_pool_mask(
-            candidates,
-            candidate_pool=pool,
-            thresholds=global_thresholds,
-            tick_size=diagnostics_config.tick_size,
-            min_depth=diagnostics_config.min_depth,
-        )
-        .fillna(False)
-        .to_numpy(dtype=bool)
-        for pool in diagnostics_config.candidate_pools
-    }
+    pool_masks = _candidate_pool_masks(candidates, diagnostics_config=diagnostics_config)
     edge_masks = {
         edge: edge_threshold_mask(candidates, edge_threshold=edge)
         .fillna(False)
@@ -455,6 +446,7 @@ def _simulate_order(
         market=market,
         use_microprice_cancel=use_microprice_cancel,
         tick_size=diagnostics_config.tick_size,
+        volatility_spike_threshold_bps=diagnostics_config.volatility_spike_threshold_bps,
     )
     if mode == "market_entry":
         entry_price = market_entry_price(side=side, quote_index=quote_index, market=market)
@@ -666,6 +658,60 @@ def _select_variants_chronologically(
     return pd.DataFrame(rows)
 
 
+def _candidate_pool_masks(
+    candidates: pd.DataFrame,
+    *,
+    diagnostics_config: MicrostructureV21Config,
+) -> dict[str, np.ndarray]:
+    masks: dict[str, np.ndarray] = {}
+    static_thresholds = {"q1": np.inf, "q2": np.inf}
+    for pool in diagnostics_config.candidate_pools:
+        if pool in QUANTILE_CANDIDATE_POOLS:
+            mask = _historical_spread_pool_mask(
+                candidates,
+                candidate_pool=pool,
+                diagnostics_config=diagnostics_config,
+            )
+        else:
+            mask = candidate_pool_mask(
+                candidates,
+                candidate_pool=pool,
+                thresholds=static_thresholds,
+                tick_size=diagnostics_config.tick_size,
+                min_depth=diagnostics_config.min_depth,
+            ).fillna(False)
+        masks[pool] = mask.to_numpy(dtype=bool)
+    return masks
+
+
+def _historical_spread_pool_mask(
+    candidates: pd.DataFrame,
+    *,
+    candidate_pool: str,
+    diagnostics_config: MicrostructureV21Config,
+) -> pd.Series:
+    result = pd.Series(False, index=candidates.index, dtype=bool)
+    symbols = candidates[SYMBOL].astype(str)
+    dates = candidates[TRADING_DATE].astype(str)
+    for symbol in sorted(symbols.dropna().unique()):
+        symbol_mask = symbols.eq(symbol)
+        symbol_dates = sorted(dates.loc[symbol_mask].dropna().unique())
+        for trading_date in symbol_dates:
+            current_mask = symbol_mask & dates.eq(trading_date)
+            historical = candidates.loc[symbol_mask & dates.lt(trading_date)]
+            if historical.empty:
+                continue
+            thresholds = spread_thresholds(historical)
+            result.loc[current_mask] = candidate_pool_mask(
+                candidates.loc[current_mask],
+                candidate_pool=candidate_pool,
+                thresholds=thresholds,
+                tick_size=diagnostics_config.tick_size,
+                min_depth=diagnostics_config.min_depth,
+            ).fillna(False)
+    return result
+
+
 def _selected_test_metrics(
     daily_metrics: pd.DataFrame,
     selection: pd.DataFrame,
@@ -745,5 +791,9 @@ def _validate_config(config: MicrostructureV21Config) -> None:
         raise MicrostructureV21WorkflowError("validation_min_dates must be positive.")
     if config.tick_size <= 0:
         raise MicrostructureV21WorkflowError("tick_size must be positive.")
+    if config.volatility_spike_threshold_bps < 0:
+        raise MicrostructureV21WorkflowError(
+            "volatility_spike_threshold_bps must be non-negative."
+        )
     for ttl in config.ttl_values:
         pd.Timedelta(ttl)

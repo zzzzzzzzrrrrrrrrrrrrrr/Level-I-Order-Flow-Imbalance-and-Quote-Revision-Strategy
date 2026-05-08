@@ -77,6 +77,15 @@ Authoritative references should be checked before changing mappings:
   access.
 - NYSE Daily TAQ client specifications for official trade, quote, and NBBO
   field semantics.
+- Public WRDS TAQ overview:
+  `https://wrds-www.wharton.upenn.edu/pages/about/data-vendors/nyse-trade-and-quote-taq/`.
+- Public WRDS/TAQ CTM access example showing `taqmsec.ctm_YYYYMMDD` fields such
+  as `tr_corr`, `tr_scond`, and `tr_seqnum`:
+  `https://onnokleen.de/post/taq_via_wrds/`.
+
+The public sources are useful for sanity checks, but the WRDS account-gated data
+dictionary remains the required source before changing table mappings or field
+semantics.
 
 Any future mapping change should update this note, the YAML data contract,
 adapter tests, and extraction/table-validation logic together.

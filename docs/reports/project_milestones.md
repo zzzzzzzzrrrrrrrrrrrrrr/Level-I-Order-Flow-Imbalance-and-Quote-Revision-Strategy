@@ -8,6 +8,61 @@ duplicate module design notes, run reports, or the canonical parameter table.
 Project-wide assumptions and manually selected parameters remain in
 `assumptions/parameter_registry.md`.
 
+## 2026-05-05
+
+Completed diagnostic cleanup and AAPL reruns after the audit of leakage and
+multi-symbol accounting risks.
+
+Code-level corrections:
+
+- v2.2 adverse-selection pass/fail input now filters v2.1 orders to validation
+  dates only.
+- v2.1 spread-quantile candidate pools use prior per-symbol candidate dates
+  rather than full-sample quantiles.
+- v2.1 cancellation volatility-spike threshold is a fixed config value instead
+  of being fitted from the same future TTL window.
+- v2.1 chunked candidate loading sorts across chunk boundaries before
+  side-change detection.
+- fixed-horizon and target-position accounting maintain per-symbol/date books
+  and report portfolio net/gross exposure.
+- CSV boolean parsing guards were added where diagnostics read saved artifacts.
+
+Reran the focused AAPL v2.1 diagnostic and both AAPL v2.2 screen paths from
+existing processed artifacts. AAPL remains a negative benchmark:
+
+```text
+v2.1 selected_test_net_pnl = -329.52
+v2.2 top_1pct_move_over_cost = 0.6483
+v2.2 filled_1s_markout_bps = 0.1355
+v2.2 unfilled_1s_markout_bps = 0.3170
+v2.2 validation_pass_flag = false
+```
+
+## 2026-05-04
+
+Added the first lightweight config-driven experiment orchestration layer:
+
+```text
+scripts/run_experiment.py
+docs/design/experiment_orchestration_v1.md
+```
+
+The runner reads an experiment YAML, resolves configured pipeline stages, and
+prints the commands by default. Execution requires `--execute`. This keeps the
+existing script/module boundaries intact and does not change v1 baseline logic
+or core schemas.
+
+Added the generic phase-1 multi-symbol data config:
+
+```text
+configs/data/phase1_wrds_12_symbols_20260313_20260410.yaml
+```
+
+This config declares the 12-symbol liquidity-regime sample on the same
+20-trading-day window. It is intended to avoid hand-copying one full WRDS YAML
+per symbol. Per-symbol artifacts should be generated only where existing
+pipeline output contracts require symbol-specific slice names.
+
 ## 2026-05-02
 
 Configured the additive v2.2 phase-1 liquidity-regime diagnostic scaffold:

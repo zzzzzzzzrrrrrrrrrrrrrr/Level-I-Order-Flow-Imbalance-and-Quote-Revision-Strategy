@@ -2,6 +2,39 @@ screen_name: v22_symbol_screen_phase1_by_liquidity_regime_same_20d
 diagnostic_version: symbol_screening_v22
 research_status: diagnostic_only
 
+data:
+  config: configs/data/phase1_wrds_12_symbols_20260313_20260410.yaml
+  mode: multi_symbol_slice_first
+  fallback: generate_per_symbol_slices_only_if_required_by_existing_outputs
+
+pipeline:
+  default_data_config: configs/data/phase1_wrds_12_symbols_20260313_20260410.yaml
+  stages:
+    - extract_wrds
+    - build_dataset
+    - build_quote_features
+    - align_trades
+    - sign_trades
+    - build_signed_flow_features
+    - build_labels
+    - build_signals
+    - run_walk_forward
+    - run_threshold_selection
+    - run_cost_model
+    - run_execution_accounting
+    - run_target_position_accounting
+    - run_parameter_sensitivity
+    - run_tvt_parameter_selection
+    - run_backtest
+    - run_model_training
+    - plot_pnl
+    - run_cost_aware_linear_score
+    - name: run_microstructure_v21
+      enabled: false
+      reason: expensive_optional_passive_hybrid_grid_after_cost_aware_predictions
+    - name: run_symbol_screen_v22
+      config: configs/experiments/v22_symbol_screen_phase1_by_liquidity_regime_same_20d.yaml
+
 date_window:
   name: same_20_trading_day_window
   start: 2026-03-13
@@ -74,10 +107,11 @@ universe:
         - WMT
 
 # AAPL is the only processed slice currently available and remains the known
-# negative-control benchmark. Add one data-slice config per remaining symbol
-# only after WRDS extraction and the v1/v2 pipeline artifacts exist for that
-# symbol. Do not overwrite the AAPL config or use test results for symbol
-# selection.
+# negative-control benchmark. The generic phase1 data config above is the
+# preferred extraction/planning input. Add the generic processed slice, or
+# generated per-symbol slices, to data_slices only after WRDS extraction and
+# the required v1/v2 pipeline artifacts exist for the configured symbols. Do
+# not overwrite the AAPL config or use test results for symbol selection.
 data_slices:
   - symbol: AAPL
     config: configs/data/aapl_wrds_20260313_20260410.yaml

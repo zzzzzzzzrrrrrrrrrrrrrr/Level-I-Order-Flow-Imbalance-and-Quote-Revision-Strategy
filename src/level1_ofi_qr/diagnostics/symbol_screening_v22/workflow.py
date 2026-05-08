@@ -1,4 +1,4 @@
-?"""Workflow and table builders for v2.2 symbol screening diagnostics."""
+"""Workflow and table builders for v2.2 symbol screening diagnostics."""
 
 from __future__ import annotations
 
@@ -226,6 +226,7 @@ def build_symbol_screening_tables(
         orders,
         quote_rows,
         configured_symbols=configured_symbols,
+        validation_dates_by_symbol=_validation_dates_by_symbol(candidate_rows),
     )
     spread_stats = _build_quote_spread_stats(quote_rows)
     summary = _build_summary(
@@ -522,12 +523,20 @@ def _build_adverse_selection(
     quotes: pd.DataFrame,
     *,
     configured_symbols: tuple[str, ...],
+    validation_dates_by_symbol: dict[str, set[str]],
 ) -> pd.DataFrame:
     if orders is None or orders.empty:
         return pd.DataFrame()
     order_rows = orders.copy()
     if configured_symbols:
         order_rows = order_rows.loc[order_rows[SYMBOL].astype(str).isin(configured_symbols)].copy()
+    if order_rows.empty:
+        return pd.DataFrame()
+    validation_mask = _validation_order_mask(
+        order_rows,
+        validation_dates_by_symbol=validation_dates_by_symbol,
+    )
+    order_rows = order_rows.loc[validation_mask].copy()
     if order_rows.empty:
         return pd.DataFrame()
     order_rows[EVENT_TIME] = pd.to_datetime(order_rows[EVENT_TIME], utc=True, format="mixed")
@@ -545,12 +554,40 @@ def _build_adverse_selection(
         rows.append(
             {
                 "symbol": symbol,
+                "split": "validation",
                 "filled": bool(filled),
                 "count": len(group),
                 "markout_1s_bps": float(group["move_1s_bps"].mean()),
             }
         )
     return pd.DataFrame(rows)
+
+
+def _validation_dates_by_symbol(candidates: pd.DataFrame) -> dict[str, set[str]]:
+    result: dict[str, set[str]] = {}
+    if candidates.empty or "split" not in candidates.columns:
+        return result
+    validation = candidates.loc[candidates["split"].eq("validation")]
+    for symbol, group in validation.groupby(SYMBOL, sort=False):
+        result[str(symbol)] = set(group[TRADING_DATE].astype(str).dropna().unique())
+    return result
+
+
+def _validation_order_mask(
+    orders: pd.DataFrame,
+    *,
+    validation_dates_by_symbol: dict[str, set[str]],
+) -> pd.Series:
+    if not validation_dates_by_symbol:
+        return pd.Series(False, index=orders.index)
+    symbol = orders[SYMBOL].astype(str)
+    trading_date = orders[TRADING_DATE].astype(str)
+    mask = pd.Series(False, index=orders.index)
+    for current_symbol, validation_dates in validation_dates_by_symbol.items():
+        if not validation_dates:
+            continue
+        mask |= symbol.eq(current_symbol) & trading_date.isin(validation_dates)
+    return mask
 
 
 def _build_quote_spread_stats(quotes: pd.DataFrame) -> pd.DataFrame:

@@ -535,4 +535,13 @@ def _median_numeric(frame: pd.DataFrame, column: str) -> float | None:
 def _sum_bool(frame: pd.DataFrame, column: str) -> int:
     if frame.empty or column not in frame.columns:
         return 0
-    return int(frame[column].fillna(False).astype(bool).sum())
+    return int(_bool_series(frame[column]).sum())
+
+
+def _bool_series(values: pd.Series) -> pd.Series:
+    if pd.api.types.is_bool_dtype(values):
+        return values.fillna(False)
+    if pd.api.types.is_numeric_dtype(values):
+        return pd.to_numeric(values, errors="coerce").fillna(0).ne(0)
+    normalized = values.astype("string").str.strip().str.lower()
+    return normalized.isin(("true", "1", "yes", "y", "t"))

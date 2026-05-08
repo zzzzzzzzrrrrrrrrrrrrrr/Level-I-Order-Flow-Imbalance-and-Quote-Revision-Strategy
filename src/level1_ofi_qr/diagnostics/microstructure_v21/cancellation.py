@@ -26,6 +26,7 @@ def first_cancellation(
     market: MarketArrays,
     use_microprice_cancel: bool,
     tick_size: float,
+    volatility_spike_threshold_bps: float = 1.0,
 ) -> CancellationResult:
     """Find first cancellation trigger strictly after submission."""
 
@@ -58,7 +59,7 @@ def first_cancellation(
 
     qr_abs = np.abs(qr)
     if len(qr_abs):
-        threshold = max(float(np.nanmedian(qr_abs)) * 5.0, 1.0)
+        threshold = max(float(volatility_spike_threshold_bps), 0.0)
         vol_spikes = np.flatnonzero(qr_abs > threshold)
         if len(vol_spikes):
             candidates.append(

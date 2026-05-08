@@ -83,6 +83,19 @@ trading-date-list checks, same session-filter checks, row counts when
 available, and missing trading dates. Results such as one group outperforming
 another belong in reports, not in this assumptions registry.
 
+## V2 Diagnostic Assumptions
+
+| Parameter | Current value | Type | Source / rationale | Sensitivity required | Status |
+| --- | --- | --- | --- | --- | --- |
+| v2.1 spread quantile gates | compute from prior per-symbol candidate dates only | methodology | avoids current/test-date spread distribution leakage | not_applicable | implemented |
+| v2.1 volatility-spike cancellation threshold | `1.0` bps | diagnostic_default | fixed config threshold; not estimated from the future TTL window | required | provisional |
+| v2.1 passive fill interpretation | diagnostic evidence only | methodology | Level-I data cannot recover queue position, hidden liquidity, or venue priority | required | implemented_boundary |
+| v2.2 adverse-selection source dates | validation order dates only | methodology | prevents test-period v2.1 order outcomes from changing validation pass/fail flags | not_applicable | implemented |
+| v2.2 pass threshold | `top_1pct_move_over_cost > 1.0` and no adverse-selection flag | diagnostic_default | screen for symbols worth more expensive execution simulation | required | provisional |
+| v2.2 strong-pass threshold | `top_1pct_move_over_cost > 1.5` and no adverse-selection flag | diagnostic_default | stricter screen for standout validation-only move/cost diagnostics | required | provisional |
+| v2.2 fail threshold | `top_1pct_move_over_cost < 0.5` or adverse-selection flag | diagnostic_default | blocks weak move/cost and passive adverse-selection cases | required | provisional |
+| multi-symbol accounting book | positions keyed by `symbol` and `trading_date`, with portfolio net/gross exposure reported | methodology | avoids mixing unrelated simultaneous symbol positions under one simulation id | not_applicable | implemented |
+
 ## Data Extraction Assumptions
 
 | Parameter | Current value | Type | Source / rationale | Sensitivity required | Status |

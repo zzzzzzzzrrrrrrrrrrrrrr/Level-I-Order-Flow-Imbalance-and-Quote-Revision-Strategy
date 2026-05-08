@@ -110,6 +110,52 @@ def test_run_execution_accounting_v1_applies_fixed_and_slippage_costs() -> None:
     assert trades.loc[0, "net_pnl"] == pytest.approx(0.03 - 0.060003)
 
 
+def test_run_execution_accounting_v1_tracks_overlapping_symbols_as_portfolio() -> None:
+    rows = pd.DataFrame(
+        {
+            "event_time": pd.to_datetime(
+                [
+                    "2026-04-08T09:31:00-04:00",
+                    "2026-04-08T09:31:00.500-04:00",
+                ],
+                format="mixed",
+            ),
+            "symbol": ["AAA", "BBB"],
+            "trading_date": ["2026-04-08", "2026-04-08"],
+            "sequential_gate_signal": [1, -1],
+            "signal_midquote": [100.0, 50.0],
+            "signal_quoted_spread": [0.0, 0.0],
+            "label_available_2s": [True, True],
+            "future_midquote_2s": [101.0, 49.0],
+            "future_midquote_event_time_2s": pd.to_datetime(
+                [
+                    "2026-04-08T09:31:02-04:00",
+                    "2026-04-08T09:31:02.500-04:00",
+                ],
+                format="mixed",
+            ),
+        }
+    )
+
+    result = run_execution_accounting_v1(
+        rows,
+        config=ExecutionAccountingConfig(horizons=("2s",)),
+    )
+
+    ledger = result.ledger.reset_index(drop=True)
+    overlapping = ledger.iloc[1]
+    assert overlapping["position_after"] == pytest.approx(0.0)
+    assert overlapping["gross_position_after"] == pytest.approx(2.0)
+    assert overlapping["inventory_value_after"] == pytest.approx(50.0)
+    assert overlapping["equity_after"] == pytest.approx(0.0)
+
+    summary = result.summary.iloc[0]
+    assert summary["total_net_pnl"] == pytest.approx(2.0)
+    assert summary["final_equity"] == pytest.approx(2.0)
+    assert summary["max_abs_position"] == pytest.approx(2.0)
+    assert summary["final_gross_position"] == pytest.approx(0.0)
+
+
 def test_run_execution_accounting_v1_rejects_negative_quantity() -> None:
     with pytest.raises(ExecutionAccountingError, match="quantity must be positive"):
         run_execution_accounting_v1(

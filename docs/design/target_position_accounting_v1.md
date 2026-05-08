@@ -106,11 +106,18 @@ cash_delta = -order_quantity * fill_midquote - event_cost
 Ledger state:
 
 ```text
-position_after = cumulative order_quantity
+position_after = portfolio net position after the order
+gross_position_after = sum(abs(position)) across open symbol/date books
 cash_after = cumulative cash_delta
-inventory_value_after = position_after * fill_midquote
+inventory_value_after = sum(position * latest_fill_midquote) across books
 equity_after = cash_after + inventory_value_after
 ```
+
+Each target-position state machine runs per `symbol` and `trading_date`.
+Portfolio cash, net position, gross position, inventory value, and equity are
+then accumulated across those books within each simulation. This keeps
+multi-symbol ledgers from treating unrelated symbol positions as one shared
+single-symbol position.
 
 ## Controls
 

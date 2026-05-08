@@ -57,6 +57,17 @@ Passive fills are leakage-sensitive:
 
 The diagnostic cannot infer true queue position, hidden liquidity, cancellation priority, or venue-specific matching priority from Level-I data. Therefore v2.1 passive fills are research diagnostics, not production fill claims.
 
+## Leakage Controls
+
+Candidate-pool spread quantiles are computed from prior chronological rows only
+for each symbol. The `spread_q1` and `spread_q1_or_q2` gates must not use the
+current test date or later candidate rows to set their thresholds.
+
+Cancellation logic uses fixed diagnostic thresholds from config. In particular,
+the quote-revision volatility-spike trigger uses
+`volatility_spike_threshold_bps` instead of estimating the threshold from the
+same future TTL window being evaluated.
+
 ## Validation
 
 Variant selection is chronological. For each test date, v2.1 selects from prior validation dates only. The final test date is not used for parameter selection, and output manifests record `test_used_for_selection=False`.

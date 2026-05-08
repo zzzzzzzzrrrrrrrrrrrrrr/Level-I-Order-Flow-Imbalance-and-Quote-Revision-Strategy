@@ -60,6 +60,7 @@ ORDER_COLUMNS: Final[tuple[str, ...]] = (
 LEDGER_COLUMNS: Final[tuple[str, ...]] = (
     *ORDER_COLUMNS,
     "position_after",
+    "gross_position_after",
     "cash_after",
     "inventory_value_after",
     "equity_after",
@@ -421,12 +422,46 @@ def _build_ledger(orders: pd.DataFrame) -> pd.DataFrame:
     if orders.empty:
         return pd.DataFrame(columns=LEDGER_COLUMNS)
     ledger = orders.copy()
-    grouped = ledger.groupby("simulation_id", sort=False)
-    ledger["position_after"] = grouped["order_quantity"].cumsum()
-    ledger["cash_after"] = grouped["cash_delta"].cumsum()
-    ledger["inventory_value_after"] = ledger["position_after"] * ledger["fill_midquote"]
-    ledger["equity_after"] = ledger["cash_after"] + ledger["inventory_value_after"]
+    ledger = ledger.sort_values(
+        ["simulation_id", EVENT_TIME, SYMBOL, TRADING_DATE, "signal_row_index"],
+        kind="mergesort",
+    ).reset_index(drop=True)
+    ledger = _apply_portfolio_accounting(ledger)
     return ledger.loc[:, LEDGER_COLUMNS]
+
+
+def _apply_portfolio_accounting(ledger: pd.DataFrame) -> pd.DataFrame:
+    result = ledger.copy()
+    result["position_after"] = 0.0
+    result["gross_position_after"] = 0.0
+    result["cash_after"] = 0.0
+    result["inventory_value_after"] = 0.0
+    result["equity_after"] = 0.0
+
+    for _, group in result.groupby("simulation_id", sort=False):
+        positions: dict[tuple[str, str], float] = {}
+        last_prices: dict[tuple[str, str], float] = {}
+        cash = 0.0
+        for row_index, row in group.iterrows():
+            key = (str(row[SYMBOL]), str(row[TRADING_DATE]))
+            order_quantity = float(row["order_quantity"])
+            fill_midquote = float(row["fill_midquote"])
+            cash += float(row["cash_delta"])
+            positions[key] = positions.get(key, 0.0) + order_quantity
+            last_prices[key] = fill_midquote
+            net_position = sum(positions.values())
+            gross_position = sum(abs(position) for position in positions.values())
+            inventory_value = sum(
+                position * last_prices[current_key]
+                for current_key, position in positions.items()
+                if current_key in last_prices
+            )
+            result.loc[row_index, "position_after"] = net_position
+            result.loc[row_index, "gross_position_after"] = gross_position
+            result.loc[row_index, "cash_after"] = cash
+            result.loc[row_index, "inventory_value_after"] = inventory_value
+            result.loc[row_index, "equity_after"] = cash + inventory_value
+    return result
 
 
 def _build_summary(
@@ -463,6 +498,7 @@ def _build_summary(
                     "cost_per_trade": None,
                     "net_per_trade": None,
                     "final_position": 0.0,
+                    "final_gross_position": 0.0,
                     "final_cash": 0.0,
                     "final_equity": 0.0,
                     "max_abs_position": 0.0,
@@ -483,6 +519,7 @@ def _build_summary(
     net_pnl = float(final["equity_after"])
     gross_pnl = net_pnl + cost
     num_trades = len(ledger)
+    gross_position = _gross_position_series(ledger)
     return pd.DataFrame(
         [
             {
@@ -501,10 +538,13 @@ def _build_summary(
                 "cost_per_trade": _safe_per_trade(cost, num_trades),
                 "net_per_trade": _safe_per_trade(net_pnl, num_trades),
                 "final_position": float(final["position_after"]),
+                "final_gross_position": float(
+                    final.get("gross_position_after", abs(final["position_after"]))
+                ),
                 "final_cash": float(final["cash_after"]),
                 "final_equity": net_pnl,
-                "max_abs_position": float(ledger["position_after"].abs().max()),
-                "mean_abs_position": float(ledger["position_after"].abs().mean()),
+                "max_abs_position": float(gross_position.max()),
+                "mean_abs_position": float(gross_position.mean()),
                 "total_turnover": float(turnover),
                 "skipped_missing_price_rows": skipped_missing_price_rows,
                 "skipped_cooldown_orders": skipped_cooldown_orders,
@@ -521,6 +561,12 @@ def _safe_per_trade(value: float, num_trades: int) -> float | None:
     if num_trades == 0:
         return None
     return value / num_trades
+
+
+def _gross_position_series(ledger: pd.DataFrame) -> pd.Series:
+    if "gross_position_after" in ledger.columns:
+        return pd.to_numeric(ledger["gross_position_after"], errors="coerce").fillna(0.0)
+    return pd.to_numeric(ledger["position_after"], errors="coerce").fillna(0.0).abs()
 
 
 def _validate_inputs(

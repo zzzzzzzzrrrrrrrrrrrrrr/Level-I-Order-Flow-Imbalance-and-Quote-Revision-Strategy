@@ -25,9 +25,22 @@ Design docs define module boundaries and data contracts. They are not empirical 
 | PnL reporting | `pnl_reporting_v1.md` | `scripts/plot_pnl.py` |
 | Microstructure v2.1 | `microstructure_v21.md` | `scripts/run_microstructure_v21_diagnostics.py` |
 | Symbol screening v2.2 | `symbol_screening_v22.md` | `scripts/run_symbol_screen_v22.py` |
+| Experiment orchestration v1 | `experiment_orchestration_v1.md` | `scripts/run_experiment.py` |
+
+## By Content Area
+
+| Area | Design Docs |
+| --- | --- |
+| Data preparation | `cleaning_rules_v2.md`, `quote_trade_alignment_v1.md`, `trade_signing_v1.md` |
+| Feature and label construction | `quote_features_v1.md`, `signed_flow_features_v1.md`, `labeling_v1.md` |
+| Baseline signal and evaluation | `signals_v1.md`, `walk_forward_evaluation_v1.md`, `threshold_selection_v1.md`, `parameter_sensitivity_v1.md`, `tvt_parameter_selection_v1.md` |
+| Model and reporting | `model_training_v1.md`, `pnl_reporting_v1.md` |
+| Cost and execution accounting | `cost_model_v1.md`, `execution_accounting_v1.md`, `target_position_accounting_v1.md`, `backtest_v1.md` |
+| V2 diagnostics | `microstructure_v21.md`, `symbol_screening_v22.md` |
+| Run orchestration | `experiment_orchestration_v1.md` |
 
 ## Current Architecture Boundary
 
 V1 and cost-aware baselines remain unchanged research baselines. V2.1 and v2.2 live under `src/level1_ofi_qr/diagnostics/` as diagnostic paths.
 
-Do not move passive-fill assumptions, symbol screening, or AAPL negative-result logic into the v1 signal-generation modules.
+Experiment orchestration is a thin runner over existing scripts. Do not move passive-fill assumptions, symbol screening, or AAPL negative-result logic into the v1 signal-generation modules.

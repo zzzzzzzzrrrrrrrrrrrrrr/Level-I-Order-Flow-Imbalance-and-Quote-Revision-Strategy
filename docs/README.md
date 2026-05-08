@@ -28,6 +28,12 @@ git show aapl-negative-baseline-v22 --no-patch --format=fuller
 
 ## Read This First
 
+For a topic-based map across all documentation, start with:
+
+```text
+CONTENT_MAP.md
+```
+
 1. `reports/symbol_screening_v22_phase1_by_liquidity_regime_same_20d.md`
    Phase-1 group-aware liquidity-regime screening design and audit requirements.
 
@@ -54,6 +60,17 @@ git show aapl-negative-baseline-v22 --no-patch --format=fuller
 | `decisions/` | Accepted architecture and methodology decisions. Read when asking why something is structured this way. |
 | `reports/` | Empirical run results, metrics, negative findings, and reproducibility notes. |
 | `references/` | External data/manual/source notes. |
+
+## Content Areas
+
+| Content Area | Primary Docs |
+| --- | --- |
+| Current checkpoint and negative baseline | `CONTENT_MAP.md`, `reports/README.md` |
+| Data, schema, cleaning, and WRDS fields | `design/cleaning_rules_v2.md`, `design/quote_trade_alignment_v1.md`, `references/wrds_taq_field_notes.md` |
+| Feature, label, signal, and evaluation pipeline | `design/quote_features_v1.md`, `design/signed_flow_features_v1.md`, `design/labeling_v1.md`, `design/signals_v1.md`, `design/walk_forward_evaluation_v1.md` |
+| Cost, execution, backtest, and PnL accounting | `design/cost_model_v1.md`, `design/execution_accounting_v1.md`, `design/backtest_v1.md`, `design/pnl_reporting_v1.md` |
+| V2 diagnostics and 12-symbol phase-1 screen | `design/microstructure_v21.md`, `design/symbol_screening_v22.md`, `reports/symbol_screening_v22_phase1_by_liquidity_regime_same_20d.md` |
+| Experiment orchestration | `design/experiment_orchestration_v1.md` |
 
 ## Reproduction Commands
 

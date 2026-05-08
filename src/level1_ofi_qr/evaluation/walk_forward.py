@@ -171,7 +171,7 @@ def _evaluate_subset(
     direction_col = f"future_midquote_direction_{suffix}"
     return_col = f"future_midquote_return_bps_{suffix}"
 
-    label_available = rows[available_col].astype(bool) & rows[direction_col].notna()
+    label_available = _bool_series(rows[available_col]) & rows[direction_col].notna()
     signals = pd.to_numeric(rows[signal_column], errors="coerce")
     directions = pd.to_numeric(rows[direction_col], errors="coerce")
     returns = pd.to_numeric(rows[return_col], errors="coerce")
@@ -248,6 +248,15 @@ def _series_median(values: pd.Series) -> float | None:
     if non_null.empty:
         return None
     return float(non_null.median())
+
+
+def _bool_series(values: pd.Series) -> pd.Series:
+    if pd.api.types.is_bool_dtype(values):
+        return values.fillna(False)
+    if pd.api.types.is_numeric_dtype(values):
+        return pd.to_numeric(values, errors="coerce").fillna(0).ne(0)
+    normalized = values.astype("string").str.strip().str.lower()
+    return normalized.isin(("true", "1", "yes", "y", "t"))
 
 
 def _horizon_suffix(horizon: str) -> str:

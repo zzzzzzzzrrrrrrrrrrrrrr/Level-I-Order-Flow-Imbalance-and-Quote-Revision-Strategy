@@ -13,6 +13,7 @@ from level1_ofi_qr.evaluation import (
     build_threshold_selection,
     run_threshold_selection_v1,
 )
+from level1_ofi_qr.evaluation.threshold_selection import _bool_series
 from level1_ofi_qr.utils import load_data_slice_config
 
 
@@ -109,6 +110,14 @@ def test_run_threshold_selection_v1_rejects_negative_grid_value() -> None:
                 qi_threshold_grid=(-0.1,),
             ),
         )
+
+
+def test_threshold_selection_bool_series_does_not_treat_false_string_as_true() -> None:
+    values = pd.Series(["False", "true", "0", "1", "", None])
+
+    parsed = _bool_series(values)
+
+    assert parsed.tolist() == [False, True, False, True, False, False]
 
 
 def test_build_threshold_selection_writes_manifest(tmp_path: Path) -> None:

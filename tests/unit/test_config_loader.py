@@ -53,3 +53,31 @@ def test_load_data_slice_config_parses_wrds_slice() -> None:
     assert config.data_contract.trade_mapping["sale_condition"] == "tr_scond"
     assert config.data_contract.trade_mapping["source"]["literal"] == "wrds_taq_ctm"
     assert config.data_contract.trade_mapping["trade_sequence_number"] == "tr_seqnum"
+
+
+def test_load_phase1_multi_symbol_data_config() -> None:
+    config = load_data_slice_config(
+        Path(__file__).resolve().parents[2]
+        / "configs"
+        / "data"
+        / "phase1_wrds_12_symbols_20260313_20260410.yaml"
+    )
+
+    assert config.slice_name == "phase1_wrds_12_symbols_20260313_20260410"
+    assert config.symbols == (
+        "AAPL",
+        "MSFT",
+        "NVDA",
+        "AMZN",
+        "META",
+        "AMD",
+        "BAC",
+        "C",
+        "F",
+        "XOM",
+        "JPM",
+        "WMT",
+    )
+    assert config.time_range.trading_dates == load_data_slice_config(CONFIG_PATH).time_range.trading_dates
+    assert config.data_contract.quote_mapping["bid"] == "best_bid"
+    assert config.data_contract.trade_mapping["trade_price"] == "price"

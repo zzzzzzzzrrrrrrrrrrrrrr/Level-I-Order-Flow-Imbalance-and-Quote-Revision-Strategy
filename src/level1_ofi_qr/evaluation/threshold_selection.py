@@ -260,7 +260,7 @@ def _evaluate_thresholds(
     qr_threshold_bps: float,
 ) -> dict[str, object]:
     suffix = _horizon_suffix(horizon)
-    label_available = rows[f"label_available_{suffix}"].astype(bool)
+    label_available = _bool_series(rows[f"label_available_{suffix}"])
     direction = pd.to_numeric(rows[f"future_midquote_direction_{suffix}"], errors="coerce")
     returns = pd.to_numeric(rows[f"future_midquote_return_bps_{suffix}"], errors="coerce")
     qi = pd.to_numeric(rows[SIGNAL_QUOTE_IMBALANCE], errors="coerce")
@@ -335,6 +335,15 @@ def _series_median(values: pd.Series) -> float | None:
     if non_null.empty:
         return None
     return float(non_null.median())
+
+
+def _bool_series(values: pd.Series) -> pd.Series:
+    if pd.api.types.is_bool_dtype(values):
+        return values.fillna(False)
+    if pd.api.types.is_numeric_dtype(values):
+        return pd.to_numeric(values, errors="coerce").fillna(0).ne(0)
+    normalized = values.astype("string").str.strip().str.lower()
+    return normalized.isin(("true", "1", "yes", "y", "t"))
 
 
 def _horizon_suffix(horizon: str) -> str:

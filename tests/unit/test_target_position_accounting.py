@@ -78,6 +78,45 @@ def test_run_target_position_accounting_v1_tracks_position_cash_and_equity() -> 
     assert final["equity_after"] == pytest.approx(0.09)
 
 
+def test_run_target_position_accounting_v1_tracks_overlapping_symbols_as_portfolio() -> None:
+    rows = pd.DataFrame(
+        {
+            "event_time": pd.to_datetime(
+                [
+                    "2026-04-08T09:31:00-04:00",
+                    "2026-04-08T09:31:00.500-04:00",
+                    "2026-04-08T09:31:03-04:00",
+                    "2026-04-08T09:31:03.500-04:00",
+                ],
+                format="mixed",
+            ),
+            "symbol": ["AAA", "BBB", "AAA", "BBB"],
+            "trading_date": ["2026-04-08"] * 4,
+            "sequential_gate_signal": [1, -1, 0, 0],
+            "signal_midquote": [100.0, 50.0, 101.0, 49.0],
+            "signal_quoted_spread": [0.0, 0.0, 0.0, 0.0],
+        }
+    )
+
+    result = run_target_position_accounting_v1(
+        rows,
+        config=TargetPositionAccountingConfig(),
+    )
+
+    ledger = result.ledger.reset_index(drop=True)
+    overlapping = ledger.iloc[1]
+    assert overlapping["position_after"] == pytest.approx(0.0)
+    assert overlapping["gross_position_after"] == pytest.approx(2.0)
+    assert overlapping["inventory_value_after"] == pytest.approx(50.0)
+    assert overlapping["equity_after"] == pytest.approx(0.0)
+
+    summary = result.summary.iloc[0]
+    assert summary["net_pnl"] == pytest.approx(2.0)
+    assert summary["final_equity"] == pytest.approx(2.0)
+    assert summary["max_abs_position"] == pytest.approx(2.0)
+    assert summary["final_gross_position"] == pytest.approx(0.0)
+
+
 def test_run_target_position_accounting_v1_applies_cooldown_and_eod_flat() -> None:
     result = run_target_position_accounting_v1(
         signal_rows(),

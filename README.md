@@ -26,6 +26,33 @@ Documentation starts at `docs/README.md`. For the current AAPL negative-result c
 - The current AAPL WRDS slice uses `taqmsec.nbbom_YYYYMMDD` as the main quote source, so normalized quotes represent national BBO state: `bid_exchange`, `ask_exchange`, `bid`, `ask`, `bid_size`, and `ask_size`. Trades use `taqmsec.ctm_YYYYMMDD`.
 - The active prototype slice is `aapl_wrds_20260313_20260410`: 20 regular-session AAPL dates from `2026-03-13` through `2026-04-10`, excluding the `2026-04-03` market holiday. Its data and outputs live in slice-named folders, separate from the earlier 3-day validation slice.
 - Cleaning v2, quote-trade alignment v1, quote feature v1, trade signing v1, signed-flow feature v1, labeling v1, signals v1, walk-forward evaluation v1, threshold selection v1, cost model v1, target-position accounting v1, TVT parameter selection v1, backtest v1, model training v1, cost-aware linear-score selection, microstructure v2 diagnostics, microstructure v2.1 passive/hybrid diagnostics, v2.2 symbol screening diagnostics, and the assumption registry are implemented as separate auditable artifacts. Condition-code eligibility, official fee modeling, full-grid v2.1 performance optimization, multi-symbol data extraction/runs, and research-grade backtesting remain unfinished stages.
+- The phase-1 liquidity-regime screen now has a generic 12-symbol WRDS data config and a lightweight experiment runner. The runner defaults to dry-run planning and only executes stages when `--execute` is passed.
+
+## Experiment orchestration
+
+Preview the phase-1 pipeline without running WRDS extraction or writing pipeline outputs:
+
+```powershell
+D:\python_library_envs\VHFT_lab\python.exe scripts\run_experiment.py configs\experiments\v22_symbol_screen_phase1_by_liquidity_regime_same_20d.yaml
+```
+
+Execute the resolved stages only after checking the plan, credentials, and expected data volume:
+
+```powershell
+D:\python_library_envs\VHFT_lab\python.exe scripts\run_experiment.py configs\experiments\v22_symbol_screen_phase1_by_liquidity_regime_same_20d.yaml --execute
+```
+
+The generic phase-1 data config is:
+
+```text
+configs/data/phase1_wrds_12_symbols_20260313_20260410.yaml
+```
+
+Use stage filters to resume part of a run:
+
+```powershell
+D:\python_library_envs\VHFT_lab\python.exe scripts\run_experiment.py configs\experiments\v22_symbol_screen_phase1_by_liquidity_regime_same_20d.yaml --from-stage build_labels --to-stage run_cost_aware_linear_score
+```
 
 ## WRDS extraction
 

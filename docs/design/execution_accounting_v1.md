@@ -116,10 +116,15 @@ Ledger-level:
 
 ```text
 cash_after = cumulative cash_delta
-position_after = cumulative quantity_delta
-inventory_value_after = position_after * fill_midquote
+position_after = portfolio net position after the event
+gross_position_after = sum(abs(position)) across open symbol/date books
+inventory_value_after = sum(position * latest_fill_midquote) across books
 equity_after = cash_after + inventory_value_after
 ```
+
+For multi-symbol or multi-date ledgers, the running position book is keyed by
+`symbol` and `trading_date` within each simulation. This prevents simultaneous
+positions in different symbols from overwriting each other in the equity path.
 
 For a completed horizon simulation, final position should return to zero.
 

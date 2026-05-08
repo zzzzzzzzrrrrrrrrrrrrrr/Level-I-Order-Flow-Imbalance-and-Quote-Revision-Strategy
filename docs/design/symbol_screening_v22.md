@@ -62,6 +62,22 @@ It must not affect signal generation, labeling, threshold selection, horizon
 selection, cost accounting, or pass/fail criteria.
 ```
 
+## Phase-1 Research Sequence
+
+Phase 1 follows the AAPL diagnostic path:
+
+```text
+v1 sequential-gate baseline
+-> cost-aware linear-score baseline
+-> v2.1 passive/hybrid microstructure diagnostics
+-> v2.2 cross-symbol liquidity-regime screen
+```
+
+The AAPL-only path did not support a robust positive cost-after-trading alpha
+conclusion. AAPL therefore remains a negative-control benchmark. Phase 1 should
+expand the sample before changing baseline logic, retuning AAPL, or adding new
+core schemas.
+
 The same-date-window claim is verified from manifests and actual processed
 trading dates. The experiment config declares the expected 20 trading dates,
 but the output manifest records per-symbol checks for:
@@ -126,6 +142,11 @@ backward compatibility.
 
 For each symbol, v2.2 assigns the first `validation_min_dates` candidate dates to `validation` and later dates to `test`. Symbol pass/fail flags are computed from validation rows only. Test rows are reported for diagnostics but are not used for symbol selection.
 
+Passive filled-vs-unfilled adverse-selection diagnostics are also computed from
+validation order dates only. Test-period v2.1 orders must not influence
+`adverse_selection_flag`, `validation_pass_flag`, `validation_strong_pass_flag`,
+or `validation_fail_flag`.
+
 Every output records `test_used_for_selection=False`.
 
 ## Screening Criteria
@@ -166,9 +187,33 @@ These are screening diagnostics, not profitability claims.
 
 The AAPL data-slice config is intentionally unchanged and remains the reproducible negative benchmark. The larger intended universe is declared in `configs/experiments/v22_symbol_screen_liquid_large_cap.yaml`.
 
-That experiment config can list many intended symbols while only including processed symbols under `data_slices`. A true cross-symbol screen requires adding one processed data-slice config per symbol after extraction and pipeline generation. Adding those symbols should happen through data configs and generated slice outputs, not by changing core schemas.
+That experiment config can list many intended symbols while only including processed symbols under `data_slices`. A true cross-symbol screen requires adding processed data slices after extraction and pipeline generation. The preferred low-risk path is a generic phase-1 WRDS/data config, or a small config-expansion wrapper, that shares the common WRDS mappings, date window, storage roots, and symbol universe instead of hand-copying one large YAML per symbol.
+
+The extraction layer already supports multiple configured symbols in
+`universe.symbols`, and the core data model remains long-form with a `symbol`
+column. The v2.2 screening layer still consumes processed slice artifacts listed
+under `data_slices`, so every included symbol must have the required processed
+artifacts before it is added to a screening run.
 
 The phase-1 liquidity-regime experiment follows the same rule. At creation
 time, it references only the existing AAPL processed slice; the remaining
 symbols should be added to `data_slices` only after WRDS extraction and
-per-symbol pipeline artifacts exist for the same 20-trading-day window.
+pipeline artifacts exist for the same 20-trading-day window.
+
+## Proxy And Schema Boundary
+
+The V2 roadmap allows additive proxy diagnostics such as microprice pressure,
+dynamic quote imbalance, signed-flow persistence, liquidity state,
+price-impact proxies, interaction terms, intensity, and duration features.
+Those additions should be implemented as additive feature or diagnostic columns
+only after the current cross-symbol screen is reproducible.
+
+For v2.2 phase 1, there is no required core schema change. The relevant schema
+boundary remains:
+
+```text
+event_time | symbol | trading_date | existing quote/trade/feature columns
+```
+
+Group metadata is reporting/audit metadata only and must not create
+group-dependent signal, label, threshold, horizon, or cost fields.

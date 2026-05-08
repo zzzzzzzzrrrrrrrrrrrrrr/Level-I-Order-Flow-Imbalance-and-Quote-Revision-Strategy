@@ -20,6 +20,16 @@ Decision docs record why a methodology or architecture choice was accepted.
 | `0012_microstructure_v21_independent_diagnostic.md` | Keep v2.1 passive/hybrid diagnostics independent from baselines. |
 | `0013_symbol_screening_v22_additive_layer.md` | Add v2.2 symbol screening without core schema changes. |
 
+## By Content Area
+
+| Area | Decisions |
+| --- | --- |
+| Pipeline boundaries and assumptions | `0001_pipeline_stage_boundaries.md`, `0003_assumption_registry_location.md` |
+| Selection and validation policy | `0002_threshold_selection_policy.md`, `0007_parameter_sensitivity_scope.md`, `0008_tvt_parameter_selection_scope.md` |
+| Cost, execution, and backtest scope | `0004_cost_model_v1_scope.md`, `0005_execution_accounting_v1_scope.md`, `0006_target_position_accounting_scope.md`, `0009_backtest_v1_scope.md` |
+| AAPL prototype and scaling | `0010_aapl_model_prototype_scope.md`, `0011_large_slice_memory_policy.md` |
+| V2 diagnostics and symbol screening | `0012_microstructure_v21_independent_diagnostic.md`, `0013_symbol_screening_v22_additive_layer.md` |
+
 ## Current Important Decision
 
 The AAPL negative baseline is preserved by tag `aapl-negative-baseline-v22`. Generalized screening is configured separately through `configs/experiments/v22_symbol_screen_liquid_large_cap.yaml`; the original AAPL data config remains unchanged for reproducibility.

@@ -718,13 +718,13 @@ def _summarize_execution_trades(scenarios: pd.DataFrame) -> pd.DataFrame:
     rows = []
     for scenario, group in scenarios.groupby("execution_scenario", sort=False):
         pnl = pd.to_numeric(group["execution_net_pnl"], errors="coerce").fillna(0.0)
-        filled = group["entry_filled"].astype(bool)
+        filled = _bool_series(group["entry_filled"])
         rows.append(
             {
                 "execution_scenario": scenario,
                 "attempted_round_trips": len(group),
                 "filled_round_trips": int(filled.sum()),
-                "passive_exit_fills": int(group["passive_exit_filled"].astype(bool).sum()),
+                "passive_exit_fills": int(_bool_series(group["passive_exit_filled"]).sum()),
                 "net_pnl": float(pnl.sum()),
                 "net_per_attempt": _safe_divide_scalar(float(pnl.sum()), len(group)),
                 "net_per_filled": _safe_divide_scalar(float(pnl.sum()), int(filled.sum())),
@@ -910,7 +910,7 @@ def _variant_from_execution_rows(
         & (execution_trades["execution_scenario"] == scenario)
     ]
     attempted = len(group)
-    filled = int(group["entry_filled"].astype(bool).sum()) if attempted else 0
+    filled = int(_bool_series(group["entry_filled"]).sum()) if attempted else 0
     net = float(pd.to_numeric(group["execution_net_pnl"], errors="coerce").fillna(0.0).sum())
     return [
         {
@@ -1239,6 +1239,15 @@ def _safe_divide_scalar(numerator: object, denominator: object) -> float:
     if np.isnan(numerator_value) or np.isnan(denominator_value) or denominator_value == 0:
         return np.nan
     return numerator_value / denominator_value
+
+
+def _bool_series(values: pd.Series) -> pd.Series:
+    if pd.api.types.is_bool_dtype(values):
+        return values.fillna(False)
+    if pd.api.types.is_numeric_dtype(values):
+        return pd.to_numeric(values, errors="coerce").fillna(0).ne(0)
+    normalized = values.astype("string").str.strip().str.lower()
+    return normalized.isin(("true", "1", "yes", "y", "t"))
 
 
 def _as_float_or_nan(value: object) -> float:

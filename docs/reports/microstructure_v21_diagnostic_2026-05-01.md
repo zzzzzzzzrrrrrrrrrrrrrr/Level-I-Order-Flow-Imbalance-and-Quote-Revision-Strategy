@@ -2,6 +2,8 @@
 
 Date: 2026-05-01
 
+Latest rerun: 2026-05-05 after leakage/accounting cleanup
+
 Slice: `aapl_wrds_20260313_20260410`
 
 Status: diagnostic only. This does not replace v1 baselines or v2.0 cost-aware diagnostics.
@@ -26,12 +28,28 @@ V2.1 separates:
 
 The default v2.1 adverse-selection buffer is `0.5` bps so weak positive edge does not automatically become aggressive market entry.
 
+2026-05-05 method recheck:
+
+- Level-I QI/OFI and microprice remain pressure proxies, not full-depth book
+  state.
+- Passive fills remain strict Level-I diagnostics, not real queue-position
+  fills.
+- Spread-quantile gates now use prior per-symbol dates only.
+- Cancellation volatility-spike checks use a fixed config threshold instead of
+  estimating from the same future TTL window.
+
 ## Full-Slice Run
 
 Command run:
 
 ```powershell
 & "D:\python_library_envs\VHFT_lab\python.exe" scripts\run_microstructure_v21_diagnostics.py configs\data\aapl_wrds_20260313_20260410.yaml --candidate-pools one_tick_spread --edge-thresholds edge_gt_0 --microprice-usages cancellation_only --ttls 1s --queue-haircuts conservative --execution-variants passive_entry_market_exit
+```
+
+2026-05-05 rerun command:
+
+```powershell
+& "D:\python_library_envs\VHFT_lab\python.exe" scripts\run_microstructure_v21_diagnostics.py configs\data\aapl_wrds_20260313_20260410.yaml --candidate-pools one_tick_spread --edge-thresholds edge_gt_0 --microprice-usages cancellation_only --ttls 1s --queue-haircuts conservative --execution-variants passive_entry_market_exit --processed-dir data\processed --output-dir data\processed
 ```
 
 This is a full-date AAPL slice run over the available v2.1 candidate events, but it is not the full 1728-variant grid. The full default grid timed out before completion on this machine because it implies many repeated passive-fill simulations over 186,405 candidate events.
@@ -97,7 +115,7 @@ The result does not invalidate passive/hybrid execution research, but it blocks 
 Unit tests passed after implementation:
 
 ```text
-110 passed
+128 passed
 ```
 
 The v2.1 workflow marks `test_used_for_selection=False`. The focused run only has one variant, so validation selection is structurally trivial; it still exercises chronological prior-date selection. Full multi-variant validation requires optimizing the repeated passive-fill simulation before it is practical on the full AAPL slice.
@@ -115,3 +133,25 @@ selected_test_net_pnl=-329.5199999999966
 selected_test_submitted_orders=131415
 selected_test_filled_orders=41148
 ```
+
+## 2026-05-05 Cleanup Rerun
+
+The focused AAPL diagnostic was rerun after repairing the v2.1 spread-gate and
+cancellation leakage risks and after adding multi-symbol-safe accounting
+guards. This focused one-tick-spread run does not depend on spread-quantile
+candidate pools, so the headline v2.1 AAPL result remains unchanged:
+
+```text
+candidate_events=186405
+submitted_orders=142563
+filled_orders=43781
+fill_rate=0.30709931749472164
+net_pnl=-341.7899999999961
+selected_test_net_pnl=-329.5199999999966
+selected_test_submitted_orders=131415
+selected_test_filled_orders=41148
+test_used_for_selection=False
+```
+
+Conclusion remains negative: the focused passive/hybrid AAPL variant does not
+cover cost under the tested assumptions.

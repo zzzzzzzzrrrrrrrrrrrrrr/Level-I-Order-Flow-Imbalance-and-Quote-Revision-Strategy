@@ -1,10 +1,17 @@
 # Microstructure V2 Diagnostic - 2026-05-01
 
+Latest status: historical diagnostic, superseded for current decision-making by
+the 2026-05-05 v2.1 and v2.2 reruns.
+
 ## Scope
 
 This report preserves the current v2.0 diagnostic result before adding v2.1.
 It is diagnostic evidence only. It does not change v1 baselines, cost-aware
 selection, or final test selection logic.
+
+Do not use the positive-looking v2.0 passive rows below as a tradability claim.
+They predate the v2.1 submitted-order, conservative cancellation,
+adverse-selection, and chronological validation diagnostics.
 
 Data slice:
 

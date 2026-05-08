@@ -8,6 +8,7 @@ from level1_ofi_qr.diagnostics import (
     build_cost_aware_microstructure_diagnostics,
     write_microstructure_figures,
 )
+from level1_ofi_qr.diagnostics.microstructure import _bool_series
 
 
 def make_ledger() -> pd.DataFrame:
@@ -290,3 +291,11 @@ def test_microstructure_figures_are_written(tmp_path) -> None:
     assert paths.execution_svg_path.exists()
     assert paths.spread_breakdown_svg_path.exists()
     assert "Microstructure Strategy V2" in paths.strategy_variants_svg_path.read_text()
+
+
+def test_microstructure_bool_series_does_not_treat_false_string_as_true() -> None:
+    values = pd.Series(["False", "true", "0", "1", "", None])
+
+    parsed = _bool_series(values)
+
+    assert parsed.tolist() == [False, True, False, True, False, False]

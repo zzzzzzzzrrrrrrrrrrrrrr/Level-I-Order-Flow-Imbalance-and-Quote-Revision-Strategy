@@ -13,6 +13,7 @@ from level1_ofi_qr.evaluation import (
     build_walk_forward_evaluation,
     evaluate_signals_walk_forward_v1,
 )
+from level1_ofi_qr.evaluation.walk_forward import _bool_series
 from level1_ofi_qr.utils import load_data_slice_config
 
 
@@ -112,6 +113,14 @@ def test_evaluate_signals_walk_forward_v1_requires_enough_dates() -> None:
             one_date,
             config=WalkForwardConfig(horizons=("1s",), min_train_dates=1),
         )
+
+
+def test_walk_forward_bool_series_does_not_treat_false_string_as_true() -> None:
+    values = pd.Series(["False", "true", "0", "1", "", None])
+
+    parsed = _bool_series(values)
+
+    assert parsed.tolist() == [False, True, False, True, False, False]
 
 
 def test_build_walk_forward_evaluation_writes_manifest(tmp_path: Path) -> None:

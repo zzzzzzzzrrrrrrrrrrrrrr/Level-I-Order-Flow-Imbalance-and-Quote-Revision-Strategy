@@ -6,13 +6,22 @@ Reports are empirical artifacts. They record what was run, what assumptions were
 
 | Report | Status | What It Answers |
 | --- | --- | --- |
-| `symbol_screening_v22_phase1_by_liquidity_regime_same_20d.md` | Configured pending data extraction | How will the phase-1 same-window liquidity-regime screen be run and audited? |
-| `symbol_screening_v22_2026-05-01.md` | Current conclusion | Does AAPL pass validation-only move/cost and adverse-selection screening? No. |
-| `microstructure_v21_diagnostic_2026-05-01.md` | Current execution diagnostic | Does passive/hybrid focused execution rescue AAPL? No under the tested variant. |
+| `symbol_screening_v22_phase1_by_liquidity_regime_same_20d.md` | AAPL-only rerun complete; 11 symbols pending extraction | How will the phase-1 same-window liquidity-regime screen be run and audited? |
+| `symbol_screening_v22_2026-05-01.md` | Current conclusion, rerun 2026-05-05 | Does AAPL pass validation-only move/cost and adverse-selection screening? No. |
+| `microstructure_v21_diagnostic_2026-05-01.md` | Current execution diagnostic, rerun 2026-05-05 | Does passive/hybrid focused execution rescue AAPL? No under the tested variant. |
 | `microstructure_v2_diagnostic_2026-05-01.md` | Prior diagnostic | Why did cost-aware selection reduce losses but not create stable tradable alpha? |
 | `aapl_wrds_20260313_20260410_pipeline_report.md` | Pipeline baseline | What happened in the 20-day AAPL v1/v1-model pipeline before v2 execution diagnostics? |
 | `aapl_wrds_20260408_20260410_pipeline_report.md` | Historical small-slice report | What happened in the earlier 3-day validation slice? |
 | `project_milestones.md` | Milestone log | What was implemented chronologically? |
+
+## By Content Area
+
+| Area | Reports |
+| --- | --- |
+| Phase-1 12-symbol setup | `symbol_screening_v22_phase1_by_liquidity_regime_same_20d.md` |
+| AAPL negative benchmark | `symbol_screening_v22_2026-05-01.md`, `microstructure_v21_diagnostic_2026-05-01.md`, `microstructure_v2_diagnostic_2026-05-01.md` |
+| AAPL pipeline baselines | `aapl_wrds_20260313_20260410_pipeline_report.md`, `aapl_wrds_20260408_20260410_pipeline_report.md` |
+| Chronology | `project_milestones.md` |
 
 ## AAPL Negative Baseline
 
@@ -28,10 +37,13 @@ Core metrics:
 v2.1 focused net_pnl = -341.79
 v2.1 selected_test_net_pnl = -329.52
 v2.2 top_1pct_move_over_cost = 0.6483
-v2.2 filled_1s_markout_bps = 0.0954
-v2.2 unfilled_1s_markout_bps = 0.3115
+v2.2 filled_1s_markout_bps = 0.1355
+v2.2 unfilled_1s_markout_bps = 0.3170
 v2.2 validation_pass_flag = false
 ```
+
+The v2.2 markout values above are from the 2026-05-05 rerun and use
+validation-date v2.1 orders only for the adverse-selection diagnostic.
 
 Current v2.2 experiment artifacts:
 

@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import pandas as pd
+import pytest
 
 from level1_ofi_qr.diagnostics.symbol_screening_v22 import (
     SymbolScreenV22Config,
     build_symbol_screening_tables,
 )
+from level1_ofi_qr.diagnostics.symbol_screening_v22.group_reporting import _sum_bool
 
 
 def test_symbol_screening_markout_does_not_cross_symbols() -> None:
@@ -100,6 +102,61 @@ def test_symbol_screening_summary_uses_validation_not_test_for_pass_flag() -> No
     assert not bool(summary["test_used_for_selection"])
 
 
+def test_symbol_screening_adverse_selection_uses_validation_orders_only() -> None:
+    candidates = pd.DataFrame(
+        [
+            _candidate("AAA", "2026-04-01", "2026-04-01T09:30:00-04:00", 100.0, 1.0),
+            _candidate("AAA", "2026-04-02", "2026-04-02T09:30:00-04:00", 100.0, 2.0),
+            _candidate("AAA", "2026-04-03", "2026-04-03T09:30:00-04:00", 100.0, 3.0),
+        ]
+    )
+    quotes = pd.DataFrame(
+        [
+            _quote("AAA", "2026-04-01", "2026-04-01T09:30:00-04:00", 100.0),
+            _quote("AAA", "2026-04-01", "2026-04-01T09:30:01-04:00", 100.01),
+            _quote("AAA", "2026-04-02", "2026-04-02T09:30:00-04:00", 100.0),
+            _quote("AAA", "2026-04-02", "2026-04-02T09:30:01-04:00", 100.02),
+            _quote("AAA", "2026-04-02", "2026-04-02T09:31:00-04:00", 100.0),
+            _quote("AAA", "2026-04-02", "2026-04-02T09:31:01-04:00", 100.02),
+            _quote("AAA", "2026-04-02", "2026-04-02T09:32:00-04:00", 100.0),
+            _quote("AAA", "2026-04-02", "2026-04-02T09:32:01-04:00", 100.01),
+            _quote("AAA", "2026-04-03", "2026-04-03T09:30:00-04:00", 100.0),
+            _quote("AAA", "2026-04-03", "2026-04-03T09:30:01-04:00", 100.03),
+            _quote("AAA", "2026-04-03", "2026-04-03T09:31:00-04:00", 100.0),
+            _quote("AAA", "2026-04-03", "2026-04-03T09:31:01-04:00", 99.95),
+            _quote("AAA", "2026-04-03", "2026-04-03T09:32:00-04:00", 100.0),
+            _quote("AAA", "2026-04-03", "2026-04-03T09:32:01-04:00", 100.05),
+        ]
+    )
+    orders = pd.DataFrame(
+        [
+            _order("AAA", "2026-04-02", "2026-04-02T09:31:00-04:00", True, 100.0),
+            _order("AAA", "2026-04-02", "2026-04-02T09:32:00-04:00", False, 100.0),
+            _order("AAA", "2026-04-03", "2026-04-03T09:31:00-04:00", True, 100.0),
+            _order("AAA", "2026-04-03", "2026-04-03T09:32:00-04:00", False, 100.0),
+        ]
+    )
+
+    tables = build_symbol_screening_tables(
+        candidates,
+        quotes,
+        orders=orders,
+        screening_config=SymbolScreenV22Config(
+            horizons=("1s",),
+            decile_horizons=("1s",),
+            validation_min_dates=2,
+            pass_move_over_cost=1.0,
+        ),
+        configured_symbols=("AAA",),
+    )
+
+    summary = tables.summary.iloc[0]
+    assert summary["filled_1s_markout_bps"] == pytest.approx(2.0)
+    assert summary["unfilled_1s_markout_bps"] == pytest.approx(1.0)
+    assert not bool(summary["adverse_selection_flag"])
+    assert bool(summary["validation_pass_flag"])
+
+
 def test_symbol_screening_group_metadata_is_reporting_only() -> None:
     candidates = pd.DataFrame(
         [
@@ -159,6 +216,12 @@ def test_symbol_screening_group_metadata_is_reporting_only() -> None:
     )
 
 
+def test_symbol_screening_group_reporting_bool_sum_parses_strings() -> None:
+    frame = pd.DataFrame({"flag": ["False", "true", "0", "1", None]})
+
+    assert _sum_bool(frame, "flag") == 2
+
+
 def _candidate(
     symbol: str,
     trading_date: str,
@@ -189,4 +252,21 @@ def _quote(symbol: str, trading_date: str, event_time: str, midquote: float) -> 
         "trading_date": trading_date,
         "midquote": midquote,
         "quoted_spread": 0.01,
+    }
+
+
+def _order(
+    symbol: str,
+    trading_date: str,
+    event_time: str,
+    filled: bool,
+    entry_midquote: float,
+) -> dict[str, object]:
+    return {
+        "event_time": event_time,
+        "symbol": symbol,
+        "trading_date": trading_date,
+        "side": 1,
+        "filled": filled,
+        "entry_midquote": entry_midquote,
     }

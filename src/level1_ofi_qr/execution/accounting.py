@@ -74,6 +74,7 @@ LEDGER_COLUMNS: Final[tuple[str, ...]] = (
     "realized_gross_pnl",
     "realized_net_pnl",
     "position_after",
+    "gross_position_after",
     "cash_after",
     "inventory_value_after",
     "equity_after",
@@ -418,11 +419,37 @@ def _build_ledger_frame(trades: pd.DataFrame) -> pd.DataFrame:
 
 def _apply_running_accounting(ledger: pd.DataFrame) -> pd.DataFrame:
     result = ledger.copy()
-    grouped = result.groupby("simulation_id", sort=False)
-    result["position_after"] = grouped["quantity_delta"].cumsum()
-    result["cash_after"] = grouped["cash_delta"].cumsum()
-    result["inventory_value_after"] = result["position_after"] * result["fill_midquote"]
-    result["equity_after"] = result["cash_after"] + result["inventory_value_after"]
+    result["position_after"] = 0.0
+    result["gross_position_after"] = 0.0
+    result["cash_after"] = 0.0
+    result["inventory_value_after"] = 0.0
+    result["equity_after"] = 0.0
+
+    for _, group in result.groupby("simulation_id", sort=False):
+        positions: dict[tuple[str, str], float] = {}
+        last_prices: dict[tuple[str, str], float] = {}
+        cash = 0.0
+        for row_index, row in group.iterrows():
+            key = (str(row[SYMBOL]), str(row[TRADING_DATE]))
+            quantity_delta = float(row["quantity_delta"])
+            fill_midquote = float(row["fill_midquote"])
+            cash += float(row["cash_delta"])
+            positions[key] = positions.get(key, 0.0) + quantity_delta
+            last_prices[key] = fill_midquote
+
+            net_position = sum(positions.values())
+            gross_position = sum(abs(position) for position in positions.values())
+            inventory_value = sum(
+                position * last_prices[current_key]
+                for current_key, position in positions.items()
+                if current_key in last_prices
+            )
+            result.loc[row_index, "position_after"] = net_position
+            result.loc[row_index, "gross_position_after"] = gross_position
+            result.loc[row_index, "cash_after"] = cash
+            result.loc[row_index, "inventory_value_after"] = inventory_value
+            result.loc[row_index, "equity_after"] = cash + inventory_value
+
     result = result.drop(columns=["_event_order"])
     return result.loc[:, LEDGER_COLUMNS]
 
@@ -451,6 +478,7 @@ def _summarize_horizon(
             "win_rate_net_positive": None,
             "total_turnover": 0.0,
             "final_position": 0.0,
+            "final_gross_position": 0.0,
             "final_cash": 0.0,
             "final_equity": 0.0,
             "max_abs_position": 0.0,
@@ -458,6 +486,7 @@ def _summarize_horizon(
         }
     turnover = (ledger["quantity_delta"].abs() * ledger["fill_midquote"]).sum()
     final = ledger.iloc[-1]
+    gross_position = _gross_position_series(ledger)
     return {
         "simulation_id": trades["simulation_id"].iloc[0],
         "horizon": horizon,
@@ -472,10 +501,11 @@ def _summarize_horizon(
         "win_rate_net_positive": _series_positive_share(trades["net_pnl"]),
         "total_turnover": float(turnover),
         "final_position": float(final["position_after"]),
+        "final_gross_position": float(final.get("gross_position_after", abs(final["position_after"]))),
         "final_cash": float(final["cash_after"]),
         "final_equity": float(final["equity_after"]),
-        "max_abs_position": float(ledger["position_after"].abs().max()),
-        "mean_abs_position": float(ledger["position_after"].abs().mean()),
+        "max_abs_position": float(gross_position.max()),
+        "mean_abs_position": float(gross_position.mean()),
     }
 
 
@@ -493,6 +523,12 @@ def _concat_or_empty(frames: list[pd.DataFrame], columns: tuple[str, ...]) -> pd
     if not non_empty:
         return pd.DataFrame(columns=columns)
     return pd.concat(non_empty, ignore_index=True).loc[:, columns]
+
+
+def _gross_position_series(ledger: pd.DataFrame) -> pd.Series:
+    if "gross_position_after" in ledger.columns:
+        return pd.to_numeric(ledger["gross_position_after"], errors="coerce").fillna(0.0)
+    return pd.to_numeric(ledger["position_after"], errors="coerce").fillna(0.0).abs()
 
 
 def _simulation_id(*, horizon: str, fixed_bps: float, slippage_ticks: float) -> str:

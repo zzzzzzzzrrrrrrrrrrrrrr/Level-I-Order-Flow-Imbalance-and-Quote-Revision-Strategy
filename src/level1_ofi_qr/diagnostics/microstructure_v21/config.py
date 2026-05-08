@@ -46,6 +46,7 @@ class MicrostructureV21Config:
     min_depth: float = 200.0
     market_safety_margin_bps: float = 0.0
     adverse_selection_buffer_bps: float = 0.5
+    volatility_spike_threshold_bps: float = 1.0
     validation_min_dates: int = 2
     validation_objective: str = "net_pnl_per_submitted_order"
     post_fill_horizons: tuple[str, ...] = ("100ms", "500ms", "1s", "5s")
